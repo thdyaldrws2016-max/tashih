@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>نظام التصحيح الآلي للاختبارات</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #f8fafc;
+    margin: 0;
+    padding: 0;
+}
+header {
+    background: #3b82f6;
+    color: white;
+    padding: 15px;
+    text-align: center;
+}
+.container {
+    padding: 20px;
+}
+button {
+    padding: 10px 15px;
+    margin: 5px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.btn-primary { background:#3b82f6; color:white; }
+.btn-success { background:#22c55e; color:white; }
+.btn-danger { background:#ef4444; color:white; }
+.btn-info { background:#06b6d4; color:white; }
+.card {
+    background:white;
+    padding:15px;
+    border-radius:10px;
+    margin-bottom:15px;
+}
+video {
+    width:100%;
+    max-height:300px;
+    background:black;
+    border-radius:10px;
+}
+table {
+    width:100%;
+    border-collapse:collapse;
+}
+th,td {
+    border:1px solid #ddd;
+    padding:8px;
+    text-align:center;
+}
+th {
+    background:#3b82f6;
+    color:white;
+}
+#toast {
+    position:fixed;
+    bottom:20px;
+    left:20px;
+    background:#333;
+    color:white;
+    padding:10px 15px;
+    border-radius:6px;
+    display:none;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>📘 نظام التصحيح الآلي للاختبارات</h1>
+</header>
+
+<div class="container">
+
+    <div class="card">
+        <h3>📷 مسح ورقة الإجابة</h3>
+
+        <video id="camera" autoplay playsinline></video>
+        <canvas id="capture" hidden></canvas>
+
+        <div style="margin-top:10px">
+            <button class="btn-primary" onclick="app.startCamera()">تشغيل الكاميرا</button>
+            <button class="btn-success" onclick="app.captureImage()">التقاط وتصحيح</button>
+            <button class="btn-danger" onclick="app.stopCamera()">إيقاف الكاميرا</button>
+        </div>
+
+        <div id="quick-stats"></div>
+    </div>
+
+    <div class="card">
+        <h3>📊 النتائج</h3>
+
+        <button class="btn-success" onclick="app.exportResultsToExcel()">📊 Excel</button>
+        <button class="btn-info" onclick="app.exportResultsToPDF()">📄 PDF</button>
+
+        <table id="results-table">
+            <thead>
+                <tr>
+                    <th>الطالب</th>
+                    <th>الرقم</th>
+                    <th>الدرجة</th>
+                    <th>النسبة</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+class AutoGradingSystem {
+    constructor() {
+        this.cameraStream = null;
+        this.results = [];
+        this.answerKey = {1:'أ',2:'ب',3:'ج',4:'د',5:'أ'};
+        this.numQuestions = 5;
+    }
+
+    showToast(msg) {
+        const t = document.getElementById('toast');
+        t.innerText = msg;
+        t.style.display = 'block';
+        setTimeout(()=>t.style.display='none',3000);
+    }
+
+    async startCamera() {
+        try {
+            this.cameraStream = await navigator.mediaDevices.getUserMedia({
+                video:{facingMode:"environment"}, audio:false
+            });
+            document.getElementById('camera').srcObject = this.cameraStream;
+            this.showToast('📷 تم تشغيل الكاميرا');
+        } catch {
+            this.showToast('❌ فشل تشغيل الكاميرا');
+        }
+    }
+
+    stopCamera() {
+        if(this.cameraStream){
+            this.cameraStream.getTracks().forEach(t=>t.stop());
+            this.cameraStream=null;
+            this.showToast('⛔ تم إيقاف الكاميرا');
+        }
+    }
+
+    getBubbleLayout() {
+        const layout=[];
+        const startX=100,startY=150,gapX=60,gapY=60,r=12;
+        const opts=['أ','ب','ج','د'];
+        for(let q=1;q<=this.numQuestions;q++){
+            opts.forEach((o,i)=>{
+                layout.push({q,o,x:startX+i*gapX,y:startY+(q-1)*gapY,r});
+            });
+        }
+        return layout;
+    }
+
+    analyzeBubble(ctx,b) {
+        const img=ctx.getImageData(b.x-b.r,b.y-b.r,b.r*2,b.r*2).data;
+        let dark=0,total=0;
+        for(let i=0;i<img.length;i+=4){
+            const br=(img[i]+img[i+1]+img[i+2])/3;
+            if(br<150) dark++;
+            total++;
+        }
+        return dark/total;
+    }
+
+    extractAnswers(canvas){
+        const ctx=canvas.getContext('2d');
+        const layout=this.getBubbleLayout();
+        const ans={};
+        layout.forEach(b=>{
+            if(this.analyzeBubble(ctx,b)>0.25){
+                ans[b.q]=b.o;
+            }
+        });
+        return ans;
+    }
+
+    grade(ans){
+        let score=0;
+        for(let q in this.answerKey){
+            if(ans[q]===this.answerKey[q]) score++;
+        }
+        return {
+            score,
+            percent:((score/this.numQuestions)*100).toFixed(1)
+        };
+    }
+
+    captureImage(){
+        const v=document.getElementById('camera');
+        const c=document.getElementById('capture');
+        c.width=v.videoWidth;
+        c.height=v.videoHeight;
+        const ctx=c.getContext('2d');
+        ctx.drawImage(v,0,0);
+
+        const answers=this.extractAnswers(c);
+        const result=this.grade(answers);
+
+        this.results.push({
+            name:'طالب',
+            id:'AUTO-'+Math.floor(Math.random()*9000),
+            ...result
+        });
+
+        this.renderResults();
+        this.updateStats(result);
+
+        this.showToast('✅ تم التصحيح والحفظ');
+    }
+
+    updateStats(r){
+        document.getElementById('quick-stats').innerHTML=`
+            <h3>${r.percent}%</h3>
+            <p>${r.score}/${this.numQuestions}</p>`;
+    }
+
+    renderResults(){
+        const tb=document.querySelector('#results-table tbody');
+        tb.innerHTML='';
+        this.results.forEach(r=>{
+            tb.innerHTML+=`
+            <tr>
+                <td>${r.name}</td>
+                <td>${r.id}</td>
+                <td>${r.score}</td>
+                <td>${r.percent}%</td>
+            </tr>`;
+        });
+    }
+
+    exportResultsToExcel(){
+        let csv="الطالب,الرقم,الدرجة,النسبة\n";
+        this.results.forEach(r=>{
+            csv+=`${r.name},${r.id},${r.score},${r.percent}\n`;
+        });
+        const blob=new Blob([csv],{type:'text/csv'});
+        const a=document.createElement('a');
+        a.href=URL.createObjectURL(blob);
+        a.download='results.csv';
+        a.click();
+    }
+
+    exportResultsToPDF(){
+        let rows='';
+        this.results.forEach(r=>{
+            rows+=`<tr><td>${r.name}</td><td>${r.id}</td><td>${r.score}</td><td>${r.percent}%</td></tr>`;
+        });
+        const w=window.open('');
+        w.document.write(`
+        <h1>تقرير النتائج</h1>
+        <table border="1" width="100%">
+        <tr><th>الطالب</th><th>الرقم</th><th>الدرجة</th><th>النسبة</th></tr>
+        ${rows}
+        </table>
+        <script>window.print()</script>
+        `);
+    }
+}
+
+const app=new AutoGradingSystem();
+</script>
+
+</body>
+</html>
