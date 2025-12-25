@@ -733,7 +733,7 @@
 
     
 <script>
-/* تعريف آمن لمنع التكرار */
+/* حالة عامة آمنة */
 window.appState = window.appState || {};
 appState.matchingOptions = appState.matchingOptions || [];
 </script>
@@ -2091,7 +2091,57 @@ appState.matchingOptions = appState.matchingOptions || [];
                                 💡 تأكد من أن إعدادات الطابعة على "مقاس A4" و "اللون: أسود وأبيض"
                             </p>
                         </div>
-                    </body>
+                    
+<script>
+/* كاميرا حقيقية بملء الشاشة – نسخة مستقرة */
+async function openCameraFullScreen() {
+  try {
+    let cam = document.getElementById("camera-fullscreen");
+    if (!cam) {
+      cam = document.createElement("div");
+      cam.id = "camera-fullscreen";
+      cam.style.cssText = "position:fixed;inset:0;background:black;z-index:9999;";
+      cam.innerHTML = `
+        <video id="camVideo" autoplay playsinline muted
+          style="width:100vw;height:100vh;object-fit:cover"></video>
+        <button onclick="closeCameraFullScreen()"
+          style="position:absolute;top:20px;left:20px;
+          padding:10px 15px;font-size:18px;z-index:10000">❌</button>
+      `;
+      document.body.appendChild(cam);
+    }
+
+    const video = document.getElementById("camVideo");
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "environment" },
+      audio: false
+    });
+
+    video.srcObject = stream;
+    await video.play();
+
+    if (cam.requestFullscreen) cam.requestFullscreen();
+  } catch (e) {
+    alert("خطأ في تشغيل الكاميرا: " + e.message);
+    console.error(e);
+  }
+}
+
+function closeCameraFullScreen() {
+  const cam = document.getElementById("camera-fullscreen");
+  const video = document.getElementById("camVideo");
+
+  if (video && video.srcObject) {
+    video.srcObject.getTracks().forEach(t => t.stop());
+    video.srcObject = null;
+  }
+
+  if (document.fullscreenElement) document.exitFullscreen();
+  if (cam) cam.remove();
+}
+</script>
+
+</body>
                     </html>
                 `;
                 
@@ -2313,30 +2363,45 @@ appState.matchingOptions = appState.matchingOptions || [];
         window.app = new SamieGradeSystem();
     
 /* ==== كاميرا حقيقية بملء الشاشة ==== */
-async function openCameraFullScreen(){
- const cam=document.getElementById('camera-fullscreen');
- if(!cam){
-   const d=document.createElement('div');
-   d.id='camera-fullscreen';
-   d.innerHTML='<video autoplay playsinline></video><button style="position:absolute;top:20px;left:20px;z-index:10000" onclick="closeCameraFullScreen()">❌</button>';
-   document.body.appendChild(d);
- }
  const video=document.querySelector('#camera-fullscreen video');
  const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}});
  video.srcObject=stream;
  document.getElementById('camera-fullscreen').style.display='block';
  if(document.documentElement.requestFullscreen){document.documentElement.requestFullscreen();}
 }
-function closeCameraFullScreen(){
- const cam=document.getElementById('camera-fullscreen');
- const video=cam.querySelector('video');
- if(video.srcObject){video.srcObject.getTracks().forEach(t=>t.stop());}
  cam.style.display='none';
  if(document.fullscreenElement){document.exitFullscreen();}
 }
 
 
 /* ==== كاميرا بملء الشاشة (إصلاح الشاشة السوداء) ==== */
+
+    const video = document.getElementById("camVideo");
+
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "environment" },
+      audio: false
+    });
+
+    video.srcObject = stream;
+    await video.play();
+
+    if (cam.requestFullscreen) cam.requestFullscreen();
+  } catch (e) {
+    alert("خطأ في تشغيل الكاميرا: " + e.message);
+    console.error(e);
+  }
+}
+
+
+  if (document.fullscreenElement) document.exitFullscreen();
+  if (cam) cam.remove();
+}
+
+</script>
+
+<script>
+/* كاميرا حقيقية بملء الشاشة – نسخة مستقرة */
 async function openCameraFullScreen() {
   try {
     let cam = document.getElementById("camera-fullscreen");
@@ -2355,7 +2420,6 @@ async function openCameraFullScreen() {
     }
 
     const video = document.getElementById("camVideo");
-
     const stream = await navigator.mediaDevices.getUserMedia({
       video: { facingMode: "environment" },
       audio: false
@@ -2383,7 +2447,7 @@ function closeCameraFullScreen() {
   if (document.fullscreenElement) document.exitFullscreen();
   if (cam) cam.remove();
 }
-
 </script>
+
 </body>
 </html>
