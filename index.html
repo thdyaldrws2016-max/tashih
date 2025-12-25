@@ -731,7 +731,13 @@
 
     <div id="toast-container" class="toast-container"></div>
 
-    <script>
+    
+<script>
+/* تعريف آمن لمنع التكرار */
+window.appState = window.appState || {};
+appState.matchingOptions = appState.matchingOptions || [];
+</script>
+
         // نظام التصحيح الآلي المتكامل SamieGrade
         class SamieGradeSystem {
             constructor() {
@@ -1363,7 +1369,7 @@
                         
                     case 'matching':
                         questionCount = parseInt(document.getElementById('matching-count')?.value || 10);
-                        const matchingOptions = parseInt(document.getElementById('matching-options')?.value || 10);
+                        
                         questionsHTML = this.generateMatchingQuestions(1, questionCount, matchingOptions);
                         break;
                         
@@ -1371,7 +1377,7 @@
                         const mcCount = parseInt(document.getElementById('mc-count')?.value || 30);
                         const tfCount = parseInt(document.getElementById('tf-count')?.value || 20);
                         const matchingCount = parseInt(document.getElementById('matching-count')?.value || 0);
-                        const matchingOptions = parseInt(document.getElementById('matching-options')?.value || 10);
+                        
                         
                         let currentQuestion = 1;
                         
