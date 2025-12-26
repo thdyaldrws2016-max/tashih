@@ -4,11 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>نظام التصحيح الآلي SamieGrade</title>
-    <!-- مكتبة SheetJS لتصدير Excel -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <!-- مكتبة Tesseract.js لقراءة الخط اليدوي -->
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@v4.0.2/dist/tesseract.min.js"></script>
     <style>
+        /* CSS مباشرة */
         * {
             margin: 0;
             padding: 0;
@@ -33,6 +30,7 @@
             flex-direction: column;
         }
         
+        /* Header */
         .header {
             text-align: center;
             padding: 30px 0;
@@ -51,6 +49,7 @@
             color: #94a3b8;
         }
         
+        /* Progress Bar */
         .progress-bar {
             background: #1e293b;
             border-radius: 15px;
@@ -102,6 +101,7 @@
             width: 100%;
         }
         
+        /* Main Content */
         .main-content {
             min-height: 500px;
             animation: fadeIn 0.5s ease;
@@ -113,6 +113,7 @@
             to { opacity: 1; transform: translateY(0); }
         }
         
+        /* Cards */
         .card {
             background: #1e293b;
             border-radius: 15px;
@@ -128,6 +129,7 @@
             font-size: 1.8rem;
         }
         
+        /* Forms */
         .form-group {
             margin-bottom: 20px;
         }
@@ -156,6 +158,7 @@
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
         
+        /* Buttons */
         .btn {
             padding: 12px 30px;
             border: none;
@@ -210,15 +213,7 @@
             color: white;
         }
         
-        .btn-excel {
-            background: #217346;
-            color: white;
-        }
-        
-        .btn-excel:hover {
-            background: #1a5f38;
-        }
-        
+        /* Navigation Buttons */
         .navigation-buttons {
             display: flex;
             justify-content: space-between;
@@ -232,6 +227,7 @@
             gap: 10px;
         }
         
+        /* Grid */
         .grid {
             display: grid;
             gap: 20px;
@@ -248,6 +244,7 @@
             }
         }
         
+        /* Statistics Cards */
         .stat-card {
             text-align: center;
             padding: 30px;
@@ -278,6 +275,7 @@
             font-size: 1rem;
         }
         
+        /* Toast */
         .toast-container {
             position: fixed;
             top: 20px;
@@ -311,6 +309,7 @@
         .toast-error { background: #ef4444; }
         .toast-warning { background: #f59e0b; }
         
+        /* Camera Fullscreen */
         .camera-fullscreen {
             position: fixed;
             top: 0;
@@ -397,6 +396,26 @@
             background: #dc2626;
         }
         
+        /* Answer Sheet Preview */
+        .answer-sheet-preview {
+            width: 100%;
+            min-height: 500px;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .answer-sheet-content {
+            width: 100%;
+            height: 100%;
+            background: white;
+            color: black;
+            font-family: 'Cairo', sans-serif;
+            position: relative;
+        }
+        
+        /* Utility Classes */
         .text-center { text-align: center; }
         .text-right { text-align: right; }
         .text-left { text-align: left; }
@@ -413,6 +432,12 @@
         .mt-4 { margin-top: 20px; }
         .mt-5 { margin-top: 25px; }
         
+        .p-1 { padding: 5px; }
+        .p-2 { padding: 10px; }
+        .p-3 { padding: 15px; }
+        .p-4 { padding: 20px; }
+        .p-5 { padding: 25px; }
+        
         .w-full { width: 100%; }
         .hidden { display: none !important; }
         .flex { display: flex; }
@@ -423,6 +448,7 @@
         .gap-3 { gap: 15px; }
         .gap-4 { gap: 20px; }
         
+        /* Login Page */
         .login-container {
             display: flex;
             justify-content: center;
@@ -452,6 +478,13 @@
             }
         }
         
+        .login-icon {
+            font-size: 5rem;
+            margin-bottom: 20px;
+            color: #3b82f6;
+        }
+        
+        /* Footer */
         .footer {
             text-align: center;
             padding: 20px;
@@ -461,17 +494,32 @@
             font-size: 0.9rem;
         }
         
-        /* Answer Sheet Styles - للطباعة فقط */
-        .print-sheet {
+        /* Answer Sheet Styles */
+        .answer-sheet-page {
             width: 210mm;
             min-height: 297mm;
             background: white;
             color: black;
             padding: 15mm;
             position: relative;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
             margin: 0 auto;
-            font-family: 'Cairo', Arial, sans-serif;
-            display: none; /* مخفي في العرض العادي */
+        }
+        
+        /* Compact layout for single page */
+        .compact-mode {
+            font-size: 0.8em;
+            padding: 10mm;
+        }
+        
+        .compact-mode .student-info-field {
+            min-width: 30mm;
+        }
+        
+        .compact-mode .bubble {
+            width: 3.5mm;
+            height: 3.5mm;
+            margin: 0 1mm;
         }
         
         /* Calibration Marks */
@@ -489,139 +537,69 @@
         
         /* Bubbles */
         .bubble {
-            width: 4mm;
-            height: 4mm;
+            width: 4.5mm;
+            height: 4.5mm;
             border: 0.7mm solid black;
             border-radius: 50%;
             display: inline-block;
-            margin: 0 1mm;
+            margin: 0 1.5mm;
         }
         
         /* Student Info Fields */
         .student-info-field {
             border-bottom: 1px solid black;
-            min-width: 30mm;
+            min-width: 40mm;
             display: inline-block;
             margin-right: 5mm;
             text-align: center;
         }
         
-        /* OCR Processing */
-        .ocr-processing {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
+        /* Question Grid */
+        .question-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 2mm;
+            margin-bottom: 4mm;
+        }
+        
+        .question-number {
+            font-weight: bold;
+            text-align: center;
+            padding-top: 1.5mm;
+        }
+        
+        /* Matching Questions */
+        .matching-questions-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10mm;
+            margin: 10mm 0;
+        }
+        
+        .matching-column {
             display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 10000;
             flex-direction: column;
-            color: white;
-            gap: 20px;
+            gap: 3mm;
         }
         
-        .ocr-spinner {
-            width: 50px;
-            height: 50px;
-            border: 5px solid #f3f3f3;
-            border-top: 5px solid #3b82f6;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        /* Excel Export Styles */
-        .export-options {
-            background: rgba(33, 115, 70, 0.1);
-            border: 1px solid rgba(33, 115, 70, 0.3);
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .export-controls {
+        .matching-item {
             display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 10px;
+            align-items: center;
+            gap: 5mm;
+            padding: 2mm;
+            border: 0.5mm dashed #ccc;
+            border-radius: 2mm;
         }
         
-        /* Handwriting Recognition */
-        .handwriting-option {
-            background: rgba(245, 158, 11, 0.1);
-            border: 1px solid rgba(245, 158, 11, 0.3);
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .ocr-preview {
-            width: 100%;
-            max-height: 300px;
-            overflow-y: auto;
-            background: white;
-            color: black;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 15px;
-            font-family: monospace;
-            white-space: pre-wrap;
-        }
-        
-        /* Instructions Panel */
-        .instructions-panel {
-            background: rgba(59, 130, 246, 0.1);
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .instructions-list {
-            list-style-type: none;
-            padding-right: 0;
-        }
-        
-        .instructions-list li {
-            margin-bottom: 5px;
-            padding-right: 15px;
-            position: relative;
-        }
-        
-        .instructions-list li:before {
-            content: "•";
-            position: absolute;
-            right: 0;
-            color: #3b82f6;
-        }
-        
-        /* Results Table */
-        .results-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        
-        .results-table th {
-            background: rgba(59, 130, 246, 0.2);
-            padding: 12px;
-            text-align: right;
-            border-bottom: 2px solid rgba(59, 130, 246, 0.3);
-        }
-        
-        .results-table td {
-            padding: 10px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .results-table tr:hover {
-            background: rgba(255, 255, 255, 0.05);
+        .matching-bubble {
+            width: 6mm;
+            height: 6mm;
+            border: 0.7mm solid black;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
         }
         
         /* Responsive */
@@ -648,51 +626,169 @@
                 margin: 10px;
             }
             
-            .results-table {
-                display: block;
-                overflow-x: auto;
+            .login-icon {
+                font-size: 4rem;
+            }
+            
+            .answer-sheet-page {
+                width: 100%;
+                height: auto;
+                padding: 5mm;
+                transform: scale(0.8);
+                transform-origin: top center;
+            }
+            
+            .matching-questions-container {
+                grid-template-columns: 1fr;
+                gap: 5mm;
             }
         }
         
-        /* Print Styles - مهم: طباعة ورقة الإجابة فقط */
+        /* Print Styles */
         @media print {
-            body * {
-                visibility: hidden;
+            body {
+                background: white !important;
+                color: black !important;
             }
             
-            .print-sheet,
-            .print-sheet * {
-                visibility: visible;
+            .container {
+                padding: 0 !important;
+                margin: 0 !important;
             }
             
-            .print-sheet {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-                height: 100%;
-                display: block !important;
-                margin: 0;
-                padding: 15mm;
-                box-shadow: none;
-                background: white;
-                color: black;
-            }
-            
-            .no-print {
+            .header, .progress-bar, .footer, .btn, .navigation-buttons {
                 display: none !important;
             }
             
-            /* تحسين الطباعة */
-            @page {
-                size: A4;
-                margin: 0;
+            .main-content {
+                margin: 0 !important;
+                padding: 0 !important;
             }
             
-            body {
-                margin: 0;
-                padding: 0;
+            .answer-sheet-page {
+                box-shadow: none !important;
+                margin: 0 !important;
+                padding: 10mm !important;
+                page-break-after: always;
+                min-height: auto;
             }
+            
+            .compact-mode {
+                padding: 5mm !important;
+            }
+        }
+        
+        /* Additional Styles for Answer Sheet Designer */
+        .designer-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .designer-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .designer-btn {
+            padding: 8px 16px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        
+        .designer-btn:hover {
+            background: #2563eb;
+        }
+        
+        .preview-container {
+            width: 100%;
+            overflow: auto;
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        
+        /* Match Type Controls */
+        .match-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .match-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px;
+            border-radius: 8px;
+        }
+        
+        .match-input {
+            width: 60px;
+            padding: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            color: white;
+            text-align: center;
+        }
+        
+        /* Single Page Compact Mode */
+        .single-page-mode {
+            transform: scale(0.95);
+            transform-origin: top center;
+        }
+        
+        .compact-instructions {
+            font-size: 0.7em;
+            padding: 2mm;
+            margin-bottom: 5mm;
+        }
+        
+        .compact-title {
+            font-size: 1.2em;
+            margin-bottom: 3mm;
+        }
+        
+        /* Instructions Panel */
+        .instructions-panel {
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .instructions-panel h4 {
+            color: #3b82f6;
+            margin-bottom: 10px;
+        }
+        
+        .instructions-list {
+            list-style-type: none;
+            padding-right: 0;
+        }
+        
+        .instructions-list li {
+            margin-bottom: 5px;
+            padding-right: 15px;
+            position: relative;
+        }
+        
+        .instructions-list li:before {
+            content: "•";
+            position: absolute;
+            right: 0;
+            color: #3b82f6;
         }
     </style>
 </head>
@@ -701,20 +797,7 @@
         <!-- سيتم تعبئة المحتوى هنا -->
     </div>
 
-    <!-- ورقة الإجابة للطباعة فقط -->
-    <div id="print-sheet" class="print-sheet"></div>
-
     <div id="toast-container" class="toast-container"></div>
-
-    <!-- نافذة معالجة OCR -->
-    <div id="ocr-processing" class="ocr-processing hidden">
-        <div class="ocr-spinner"></div>
-        <h3>جاري قراءة الخط اليدوي...</h3>
-        <p id="ocr-status">جاري التجهيز</p>
-        <div id="ocr-progress" style="width: 300px; height: 10px; background: #333; border-radius: 5px; margin-top: 10px;">
-            <div id="ocr-progress-bar" style="width: 0%; height: 100%; background: #3b82f6; border-radius: 5px; transition: width 0.3s;"></div>
-        </div>
-    </div>
 
     <div id="camera-fullscreen" class="camera-fullscreen hidden">
         <div class="camera-header">
@@ -732,9 +815,6 @@
             <button id="capture-btn" class="camera-btn capture-btn">
                 📸
             </button>
-            <button id="ocr-btn" class="camera-btn" style="background: #f59e0b;">
-                ✍️ OCR
-            </button>
         </div>
     </div>
 
@@ -747,8 +827,14 @@
                 this.currentStep = 'login';
                 this.cameraStream = null;
                 this.examAnswerKey = {};
-                this.tesseractWorker = null;
-                this.ocrActive = false;
+                this.questionTypesMap = {};
+                this.config = {
+                    primaryColor: '#3b82f6',
+                    secondaryColor: '#64748b',
+                    backgroundColor: '#0f172a',
+                    surfaceColor: '#1e293b',
+                    textColor: '#f1f5f9'
+                };
                 
                 this.initialize();
             }
@@ -756,29 +842,6 @@
             initialize() {
                 this.loadData();
                 this.renderApp();
-                this.initializeTesseract();
-            }
-            
-            // تهيئة Tesseract.js لقراءة الخط اليدوي
-            async initializeTesseract() {
-                try {
-                    this.tesseractWorker = await Tesseract.createWorker('ara', 1, {
-                        logger: (m) => {
-                            if (m.status === 'recognizing text') {
-                                const progressBar = document.getElementById('ocr-progress-bar');
-                                const statusText = document.getElementById('ocr-status');
-                                if (progressBar && statusText) {
-                                    const progress = m.progress * 100;
-                                    progressBar.style.width = `${progress}%`;
-                                    statusText.textContent = `جاري التعرف على النص: ${Math.round(progress)}%`;
-                                }
-                            }
-                        }
-                    });
-                    console.log('✅ Tesseract.js جاهز لقراءة الخط اليدوي');
-                } catch (error) {
-                    console.error('❌ خطأ في تهيئة Tesseract:', error);
-                }
             }
             
             // نظام التخزين المحلي
@@ -897,13 +960,14 @@
                 
                 let stepsHTML = steps.map((step, index) => {
                     const isActive = index <= currentIndex;
+                    const isCurrent = index === currentIndex;
                     
                     return `
                         <div class="step ${isActive ? 'active' : ''}">
-                            <div class="step-icon" style="background: ${isActive ? '#3b82f6' : '#64748b'}">
+                            <div class="step-icon" style="background: ${isActive ? this.config.primaryColor : this.config.secondaryColor}">
                                 ${step.icon}
                             </div>
-                            <span style="color: ${isActive ? '#f1f5f9' : '#64748b'}">
+                            <span style="color: ${isActive ? this.config.textColor : this.config.secondaryColor}">
                                 ${step.label}
                             </span>
                         </div>
@@ -949,9 +1013,9 @@
                     <div class="login-container">
                         <div class="login-card">
                             <div class="text-center mb-4">
-                                <div style="font-size: 5rem; margin-bottom: 20px; color: #3b82f6;">👨‍🏫</div>
+                                <div class="login-icon">👨‍🏫</div>
                                 <h2>تسجيل دخول المعلم</h2>
-                                <p style="color: #94a3b8;">أدخل بياناتك للوصول إلى نظام SamieGrade</p>
+                                <p style="color: ${this.config.secondaryColor}">أدخل بياناتك للوصول إلى نظام SamieGrade</p>
                             </div>
                             
                             <form id="login-form">
@@ -974,16 +1038,26 @@
                                 <div></div>
                                 <div></div>
                             </div>
+                            
+                            <div class="mt-4 p-3" style="background: rgba(59, 130, 246, 0.1); border-radius: 8px;">
+                                <p class="text-center" style="color: ${this.config.secondaryColor}; font-size: 0.9rem;">
+                                    💡 نصيحة: استخدم بريدك المدرسي الرسمي
+                                </p>
+                            </div>
                         </div>
                     </div>
                 `;
                 
-                document.getElementById('login-form').addEventListener('submit', (e) => this.handleLogin(e));
+                const loginForm = document.getElementById('login-form');
+                if (loginForm) {
+                    loginForm.addEventListener('submit', (e) => this.handleLogin(e));
+                }
             }
             
             renderDashboard() {
                 const myExams = this.data.exams.filter(e => e.teacher_id === this.currentTeacher.id);
                 const myResults = this.data.results.filter(r => r.teacher_id === this.currentTeacher.id);
+                const mySheets = this.data.answerSheets.filter(s => s.teacher_id === this.currentTeacher.id);
                 
                 const averageScore = myResults.length > 0 
                     ? (myResults.reduce((sum, r) => sum + r.percentage, 0) / myResults.length).toFixed(1)
@@ -995,7 +1069,7 @@
                         <div class="flex justify-between items-center">
                             <div>
                                 <h2>مرحباً، ${this.currentTeacher.teacher_name} 👋</h2>
-                                <p style="color: #94a3b8;">${this.currentTeacher.teacher_email}</p>
+                                <p style="color: ${this.config.secondaryColor}">${this.currentTeacher.teacher_email}</p>
                             </div>
                             <div class="flex gap-2">
                                 <button id="results-btn" class="btn btn-info">
@@ -1017,7 +1091,7 @@
                         
                         <div class="stat-card">
                             <div class="stat-icon">📄</div>
-                            <div class="stat-value">${myExams.length}</div>
+                            <div class="stat-value">${mySheets.length}</div>
                             <div class="stat-label">نماذج إجابة</div>
                         </div>
                         
@@ -1036,21 +1110,21 @@
                     
                     <div class="grid grid-cols-3 mb-4">
                         <div id="create-exam-btn" class="card text-center cursor-pointer" 
-                             style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);">
+                             style="background: linear-gradient(135deg, ${this.config.primaryColor} 0%, ${this.config.primaryColor}dd 100%); cursor: pointer;">
                             <div style="font-size: 4rem; margin-bottom: 20px;">📝</div>
                             <h3 style="color: white;">إنشاء اختبار جديد</h3>
                             <p style="color: white; opacity: 0.9;">أنشئ اختباراً وحدد نموذج الإجابة الصحيحة</p>
                         </div>
                         
                         <div id="design-sheet-btn" class="card text-center cursor-pointer"
-                             style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                             style="background: linear-gradient(135deg, #10b981 0%, #10b981dd 100%); cursor: pointer;">
                             <div style="font-size: 4rem; margin-bottom: 20px;">📄</div>
                             <h3 style="color: white;">تصميم ورقة إجابة</h3>
                             <p style="color: white; opacity: 0.9;">صمم ورقة إجابة مخصصة للاختبار</p>
                         </div>
                         
                         <div id="scan-papers-btn" class="card text-center cursor-pointer"
-                             style="background: linear-gradient(135deg, #64748b 0%, #475569 100%);">
+                             style="background: linear-gradient(135deg, ${this.config.secondaryColor} 0%, ${this.config.secondaryColor}dd 100%); cursor: pointer;">
                             <div style="font-size: 4rem; margin-bottom: 20px;">📷</div>
                             <h3 style="color: white;">مسح أوراق الطلاب</h3>
                             <p style="color: white; opacity: 0.9;">استخدم الكاميرا لمسح وتصحيح الأوراق تلقائياً</p>
@@ -1063,22 +1137,23 @@
                             <div style="margin-top: 15px;">
                                 ${myExams.slice(-3).reverse().map(exam => {
                                     const examResults = this.data.results.filter(r => r.exam_id === exam.id);
+                                    let questionTypeLabel = this.getQuestionTypeLabel(exam.question_type);
                                     
                                     return `
                                         <div class="flex justify-between items-center p-3 mb-2" 
                                              style="background: rgba(255, 255, 255, 0.05); border-radius: 8px;">
                                             <div>
                                                 <h4 style="font-weight: bold;">${exam.exam_title}</h4>
-                                                <p style="color: #94a3b8; font-size: 0.9rem;">
-                                                    ${exam.exam_subject} • ${exam.num_questions} سؤال • ${examResults.length} طالب
+                                                <p style="color: ${this.config.secondaryColor}; font-size: 0.9rem;">
+                                                    ${exam.exam_subject} • ${exam.num_questions} سؤال • ${questionTypeLabel} • ${examResults.length} طالب
                                                 </p>
                                             </div>
                                             <div class="flex gap-2">
                                                 <button class="btn btn-primary scan-exam-btn" data-exam-id="${exam.id}">
                                                     📷 مسح أوراق
                                                 </button>
-                                                <button class="btn btn-info" onclick="app.printStudentAnswerSheet('${exam.id}')">
-                                                    🖨️ طباعة الورقة
+                                                <button class="btn btn-info design-sheet-exam-btn" data-exam-id="${exam.id}">
+                                                    📄 تصميم ورقة
                                                 </button>
                                             </div>
                                         </div>
@@ -1098,145 +1173,606 @@
             }
             
             setupDashboardEvents() {
-                document.getElementById('logout-btn').addEventListener('click', () => this.logout());
-                document.getElementById('results-btn').addEventListener('click', () => this.navigateTo('results'));
-                document.getElementById('create-exam-btn').addEventListener('click', () => this.navigateTo('create-exam'));
-                document.getElementById('design-sheet-btn').addEventListener('click', () => this.navigateTo('design-sheet'));
-                document.getElementById('scan-papers-btn').addEventListener('click', () => this.navigateTo('scan-papers'));
+                const logoutBtn = document.getElementById('logout-btn');
+                if (logoutBtn) {
+                    logoutBtn.addEventListener('click', () => this.logout());
+                }
                 
-                document.querySelectorAll('.scan-exam-btn').forEach(btn => {
+                const resultsBtn = document.getElementById('results-btn');
+                if (resultsBtn) {
+                    resultsBtn.addEventListener('click', () => this.navigateTo('results'));
+                }
+                
+                const createExamBtn = document.getElementById('create-exam-btn');
+                if (createExamBtn) {
+                    createExamBtn.addEventListener('click', () => this.navigateTo('create-exam'));
+                }
+                
+                const designSheetBtn = document.getElementById('design-sheet-btn');
+                if (designSheetBtn) {
+                    designSheetBtn.addEventListener('click', () => this.navigateTo('design-sheet'));
+                }
+                
+                const scanPapersBtn = document.getElementById('scan-papers-btn');
+                if (scanPapersBtn) {
+                    scanPapersBtn.addEventListener('click', () => this.navigateTo('scan-papers'));
+                }
+                
+                const scanExamBtns = document.querySelectorAll('.scan-exam-btn');
+                scanExamBtns.forEach(btn => {
                     btn.addEventListener('click', (e) => {
                         const examId = e.target.getAttribute('data-exam-id');
                         this.selectExamForScanning(examId);
                     });
                 });
+                
+                const designSheetExamBtns = document.querySelectorAll('.design-sheet-exam-btn');
+                designSheetExamBtns.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const examId = e.target.getAttribute('data-exam-id');
+                        this.selectExamForSheetDesign(examId);
+                    });
+                });
             }
             
-            // وظائف التصدير إلى Excel
-            async exportToExcel() {
-                if (!this.currentExam) {
-                    this.showToast('⚠️ يرجى تحديد اختبار أولاً', 'warning');
-                    return;
-                }
-                
-                const results = this.data.results.filter(r => r.exam_id === this.currentExam.id);
-                
-                if (results.length === 0) {
-                    this.showToast('⚠️ لا توجد نتائج لتصديرها', 'warning');
-                    return;
-                }
-                
-                this.showToast('📊 جاري تصدير النتائج إلى Excel...', 'warning');
-                
-                // تحضير البيانات
-                const wb = XLSX.utils.book_new();
-                
-                // ورقة النتائج الإجمالية
-                const summaryData = [
-                    ['نتائج اختبار: ' + this.currentExam.exam_title],
-                    ['المادة: ' + this.currentExam.exam_subject],
-                    ['تاريخ التصدير: ' + new Date().toLocaleString('ar-SA')],
-                    [''],
-                    ['الترتيب', 'اسم الطالب', 'رقم الطالب', 'الدرجة', 'النسبة المئوية', 'الحالة', 'التاريخ']
-                ];
-                
-                results.sort((a, b) => b.percentage - a.percentage).forEach((result, index) => {
-                    summaryData.push([
-                        index + 1,
-                        result.student_name,
-                        result.student_id,
-                        `${result.score}/${result.num_questions}`,
-                        `${result.percentage}%`,
-                        result.percentage >= 50 ? 'ناجح' : 'راسب',
-                        new Date(result.created_at).toLocaleString('ar-SA')
-                    ]);
-                });
-                
-                // إحصائيات
-                summaryData.push(['']);
-                summaryData.push(['الإحصائيات:']);
-                const avg = (results.reduce((sum, r) => sum + r.percentage, 0) / results.length).toFixed(2);
-                const passed = results.filter(r => r.percentage >= 50).length;
-                const failed = results.filter(r => r.percentage < 50).length;
-                
-                summaryData.push(['متوسط النسبة:', `${avg}%`]);
-                summaryData.push(['عدد الناجحين:', passed]);
-                summaryData.push(['عدد الراسبين:', failed]);
-                summaryData.push(['النسبة المئوية للناجحين:', `${((passed / results.length) * 100).toFixed(2)}%`]);
-                
-                const ws_summary = XLSX.utils.aoa_to_sheet(summaryData);
-                
-                // ورقة التفاصيل (إجابات كل طالب)
-                const detailsData = [
-                    ['تفاصيل إجابات الطلاب'],
-                    [''],
-                    ['اسم الطالب', 'رقم الطالب', 'السؤال', 'إجابة الطالب', 'الإجابة الصحيحة', 'الحالة']
-                ];
-                
-                results.forEach(result => {
-                    const studentAnswers = JSON.parse(result.student_answers || '{}');
-                    const answerKey = JSON.parse(result.answer_key || '{}');
-                    
-                    for (let i = 1; i <= result.num_questions; i++) {
-                        const studentAnswer = studentAnswers[i] || 'لم يجِب';
-                        const correctAnswer = answerKey[i] || 'غير محدد';
-                        const isCorrect = studentAnswer === correctAnswer;
+            renderCreateExam() {
+                const mainContent = document.getElementById('main-content');
+                mainContent.innerHTML = `
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="card">
+                            <h2>📝 تفاصيل الاختبار</h2>
+                            
+                            <form id="exam-form">
+                                <div class="form-group">
+                                    <label for="exam-title">عنوان الاختبار:</label>
+                                    <input type="text" id="exam-title" class="form-control" placeholder="مثال: اختبار الفصل الأول" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="exam-subject">المادة:</label>
+                                    <input type="text" id="exam-subject" class="form-control" placeholder="مثال: الرياضيات" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="exam-questions">عدد الأسئلة:</label>
+                                    <input type="number" id="exam-questions" class="form-control" min="1" max="200" value="50" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="question-type">نوع الأسئلة:</label>
+                                    <select id="question-type" class="form-control">
+                                        <option value="multiple_choice">اختيار من متعدد فقط</option>
+                                        <option value="true_false">صح/خطأ فقط</option>
+                                        <option value="matching">مطابقة فقط</option>
+                                        <option value="mixed">أنواع مختلطة</option>
+                                    </select>
+                                </div>
+                                
+                                <div id="mixed-questions-container" class="hidden">
+                                    <div class="form-group">
+                                        <label for="mc-count">عدد أسئلة الاختيار من متعدد:</label>
+                                        <input type="number" id="mc-count" class="form-control" min="0" max="200" value="20">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="tf-count">عدد أسئلة صح/خطأ:</label>
+                                        <input type="number" id="tf-count" class="form-control" min="0" max="200" value="15">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="match-count">عدد أسئلة المطابقة:</label>
+                                        <input type="number" id="match-count" class="form-control" min="0" max="200" value="15">
+                                    </div>
+                                </div>
+                                
+                                <div id="matching-controls" class="hidden">
+                                    <div class="form-group">
+                                        <label for="match-options-count">عدد الخيارات للمطابقة:</label>
+                                        <input type="number" id="match-options-count" class="form-control" min="2" max="10" value="5">
+                                        <small style="color: ${this.config.secondaryColor}">حدد عدد الخيارات في كل سؤال مطابقة</small>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
                         
-                        detailsData.push([
-                            result.student_name,
-                            result.student_id,
-                            `س${i}`,
-                            studentAnswer,
-                            correctAnswer,
-                            isCorrect ? 'صحيح' : 'خطأ'
-                        ]);
-                    }
-                    detailsData.push(['']); // فاصل بين الطلاب
-                });
+                        <div class="card">
+                            <h2>🔑 نموذج الإجابة</h2>
+                            <p style="color: ${this.config.secondaryColor}; margin-bottom: 20px;">حدد الإجابة الصحيحة لكل سؤال</p>
+                            
+                            <div id="answer-key-form" style="max-height: 400px; overflow-y: auto; margin-bottom: 20px;"></div>
+                            
+                            <div class="grid grid-cols-2 gap-2">
+                                <button id="submit-exam-btn" class="btn btn-primary">
+                                    ✅ حفظ الاختبار
+                                </button>
+                                <button id="next-sheet-design-btn" class="btn btn-success">
+                                    📄 التالي لتصميم الورقة
+                                </button>
+                            </div>
+                            
+                            <div class="navigation-buttons">
+                                <button onclick="app.navigateTo('dashboard')" class="btn btn-secondary">
+                                    ← رجوع للوحة التحكم
+                                </button>
+                                <div></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
                 
-                const ws_details = XLSX.utils.aoa_to_sheet(detailsData);
-                
-                // إضافة الأوراق إلى الملف
-                XLSX.utils.book_append_sheet(wb, ws_summary, 'النتائج الإجمالية');
-                XLSX.utils.book_append_sheet(wb, ws_details, 'تفاصيل الإجابات');
-                
-                // إنشاء اسم الملف
-                const fileName = `نتائج_${this.currentExam.exam_title}_${new Date().toISOString().split('T')[0]}.xlsx`;
-                
-                // حفظ الملف
-                XLSX.writeFile(wb, fileName);
-                
-                this.showToast('✅ تم تصدير النتائج إلى Excel بنجاح', 'success');
+                this.setupCreateExamEvents();
+                this.handleQuestionTypeChange();
+                this.generateAnswerKeyForm();
             }
             
-            // وظيفة طباعة ورقة إجابة الطالب فقط
-            printStudentAnswerSheet(examId = null) {
-                const exam = examId ? this.data.exams.find(e => e.id === examId) : this.currentExam;
+            setupCreateExamEvents() {
+                const examQuestions = document.getElementById('exam-questions');
+                if (examQuestions) {
+                    examQuestions.addEventListener('change', () => this.generateAnswerKeyForm());
+                    examQuestions.addEventListener('input', () => this.generateAnswerKeyForm());
+                }
                 
-                if (!exam) {
-                    this.showToast('⚠️ يرجى تحديد اختبار أولاً', 'warning');
+                const questionType = document.getElementById('question-type');
+                if (questionType) {
+                    questionType.addEventListener('change', () => {
+                        this.handleQuestionTypeChange();
+                        this.generateAnswerKeyForm();
+                    });
+                }
+                
+                const mcCount = document.getElementById('mc-count');
+                if (mcCount) {
+                    mcCount.addEventListener('change', () => this.generateAnswerKeyForm());
+                    mcCount.addEventListener('input', () => this.generateAnswerKeyForm());
+                }
+                
+                const tfCount = document.getElementById('tf-count');
+                if (tfCount) {
+                    tfCount.addEventListener('change', () => this.generateAnswerKeyForm());
+                    tfCount.addEventListener('input', () => this.generateAnswerKeyForm());
+                }
+                
+                const matchCount = document.getElementById('match-count');
+                if (matchCount) {
+                    matchCount.addEventListener('change', () => this.generateAnswerKeyForm());
+                    matchCount.addEventListener('input', () => this.generateAnswerKeyForm());
+                }
+                
+                const matchOptionsCount = document.getElementById('match-options-count');
+                if (matchOptionsCount) {
+                    matchOptionsCount.addEventListener('change', () => this.generateAnswerKeyForm());
+                    matchOptionsCount.addEventListener('input', () => this.generateAnswerKeyForm());
+                }
+                
+                const submitExamBtn = document.getElementById('submit-exam-btn');
+                if (submitExamBtn) {
+                    submitExamBtn.addEventListener('click', () => this.submitExam());
+                }
+                
+                const nextSheetDesignBtn = document.getElementById('next-sheet-design-btn');
+                if (nextSheetDesignBtn) {
+                    nextSheetDesignBtn.addEventListener('click', () => this.nextToSheetDesign());
+                }
+            }
+            
+            handleQuestionTypeChange() {
+                const questionType = document.getElementById('question-type').value;
+                const mixedContainer = document.getElementById('mixed-questions-container');
+                const matchingControls = document.getElementById('matching-controls');
+                
+                if (mixedContainer) {
+                    mixedContainer.classList.toggle('hidden', questionType !== 'mixed');
+                }
+                
+                if (matchingControls) {
+                    matchingControls.classList.toggle('hidden', questionType !== 'matching' && questionType !== 'mixed');
+                }
+            }
+            
+            generateAnswerKeyForm() {
+                const container = document.getElementById('answer-key-form');
+                if (!container) return;
+                
+                const questionType = document.getElementById('question-type')?.value || 'multiple_choice';
+                let numQuestions;
+                let mcCount = 0;
+                let tfCount = 0;
+                let matchCount = 0;
+                let matchOptions = 5;
+                
+                if (questionType === 'mixed') {
+                    mcCount = parseInt(document.getElementById('mc-count')?.value || 20);
+                    tfCount = parseInt(document.getElementById('tf-count')?.value || 15);
+                    matchCount = parseInt(document.getElementById('match-count')?.value || 15);
+                    numQuestions = mcCount + tfCount + matchCount;
+                } else if (questionType === 'matching') {
+                    matchCount = parseInt(document.getElementById('exam-questions')?.value || 50);
+                    numQuestions = matchCount;
+                    matchOptions = parseInt(document.getElementById('match-options-count')?.value || 5);
+                } else if (questionType === 'multiple_choice') {
+                    mcCount = parseInt(document.getElementById('exam-questions')?.value || 50);
+                    numQuestions = mcCount;
+                } else if (questionType === 'true_false') {
+                    tfCount = parseInt(document.getElementById('exam-questions')?.value || 50);
+                    numQuestions = tfCount;
+                }
+                
+                // مسح الإجابات السابقة إذا تغير عدد الأسئلة
+                const currentKeys = Object.keys(this.examAnswerKey).map(Number);
+                if (currentKeys.length > numQuestions) {
+                    for (let i = numQuestions + 1; i <= currentKeys.length; i++) {
+                        delete this.examAnswerKey[i];
+                    }
+                }
+                
+                container.innerHTML = '';
+                
+                let questionIndex = 1;
+                
+                // أسئلة الاختيار من متعدد
+                if (mcCount > 0) {
+                    if (questionType === 'mixed') {
+                        const sectionDiv = document.createElement('div');
+                        sectionDiv.className = 'mb-4';
+                        sectionDiv.innerHTML = `<h4 style="color: ${this.config.primaryColor}; margin-bottom: 10px;">أسئلة الاختيار من متعدد (${mcCount} سؤال)</h4>`;
+                        container.appendChild(sectionDiv);
+                    }
+                    
+                    for (let i = 0; i < mcCount; i++) {
+                        const questionDiv = this.createMCQuestionElement(questionIndex);
+                        container.appendChild(questionDiv);
+                        questionIndex++;
+                    }
+                }
+                
+                // أسئلة صح/خطأ
+                if (tfCount > 0) {
+                    if (questionType === 'mixed') {
+                        const sectionDiv = document.createElement('div');
+                        sectionDiv.className = 'mb-4';
+                        sectionDiv.innerHTML = `<h4 style="color: ${this.config.primaryColor}; margin-bottom: 10px;">أسئلة صح/خطأ (${tfCount} سؤال)</h4>`;
+                        container.appendChild(sectionDiv);
+                    }
+                    
+                    for (let i = 0; i < tfCount; i++) {
+                        const questionDiv = this.createTFQuestionElement(questionIndex);
+                        container.appendChild(questionDiv);
+                        questionIndex++;
+                    }
+                }
+                
+                // أسئلة المطابقة
+                if (matchCount > 0) {
+                    if (questionType === 'mixed') {
+                        const sectionDiv = document.createElement('div');
+                        sectionDiv.className = 'mb-4';
+                        sectionDiv.innerHTML = `<h4 style="color: ${this.config.primaryColor}; margin-bottom: 10px;">أسئلة المطابقة (${matchCount} سؤال)</h4>`;
+                        container.appendChild(sectionDiv);
+                    }
+                    
+                    for (let i = 0; i < matchCount; i++) {
+                        const questionDiv = this.createMatchQuestionElement(questionIndex, matchOptions);
+                        container.appendChild(questionDiv);
+                        questionIndex++;
+                    }
+                }
+                
+                this.setupAnswerKeyButtons();
+            }
+            
+            createMCQuestionElement(questionNum) {
+                const questionDiv = document.createElement('div');
+                questionDiv.className = 'form-group';
+                questionDiv.style.background = 'rgba(255, 255, 255, 0.05)';
+                questionDiv.style.padding = '10px';
+                questionDiv.style.borderRadius = '8px';
+                questionDiv.style.marginBottom = '10px';
+                
+                const currentAnswer = this.examAnswerKey[questionNum];
+                const options = ['أ', 'ب', 'ج', 'د'];
+                
+                questionDiv.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <span style="font-weight: bold; min-width: 40px;">س${questionNum}:</span>
+                        <div class="flex flex-wrap gap-1" style="flex: 1;">
+                            ${options.map(opt => {
+                                const isSelected = currentAnswer === opt;
+                                return `
+                                    <button type="button" class="answer-btn" data-question="${questionNum}" data-option="${opt}"
+                                            style="padding: 8px 12px; border: 2px solid ${isSelected ? this.config.primaryColor : this.config.secondaryColor}; 
+                                                   border-radius: 5px; background: ${isSelected ? this.config.primaryColor : 'transparent'}; 
+                                                   color: ${isSelected ? 'white' : this.config.textColor};
+                                                   cursor: pointer; font-weight: bold; min-width: 40px;">
+                                        ${opt}
+                                    </button>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+                
+                return questionDiv;
+            }
+            
+            createTFQuestionElement(questionNum) {
+                const questionDiv = document.createElement('div');
+                questionDiv.className = 'form-group';
+                questionDiv.style.background = 'rgba(255, 255, 255, 0.05)';
+                questionDiv.style.padding = '10px';
+                questionDiv.style.borderRadius = '8px';
+                questionDiv.style.marginBottom = '10px';
+                
+                const currentAnswer = this.examAnswerKey[questionNum];
+                const options = [
+                    { value: '✓', label: 'صح' },
+                    { value: '✗', label: 'خطأ' }
+                ];
+                
+                questionDiv.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <span style="font-weight: bold; min-width: 40px;">س${questionNum}:</span>
+                        <div class="flex flex-wrap gap-1" style="flex: 1;">
+                            ${options.map(opt => {
+                                const isSelected = currentAnswer === opt.value;
+                                return `
+                                    <button type="button" class="answer-btn" data-question="${questionNum}" data-option="${opt.value}"
+                                            style="padding: 8px 12px; border: 2px solid ${isSelected ? this.config.primaryColor : this.config.secondaryColor}; 
+                                                   border-radius: 5px; background: ${isSelected ? this.config.primaryColor : 'transparent'}; 
+                                                   color: ${isSelected ? 'white' : this.config.textColor};
+                                                   cursor: pointer; font-weight: bold; min-width: 60px;">
+                                        ${opt.label} (${opt.value})
+                                    </button>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+                
+                return questionDiv;
+            }
+            
+            createMatchQuestionElement(questionNum, optionsCount) {
+                const questionDiv = document.createElement('div');
+                questionDiv.className = 'form-group';
+                questionDiv.style.background = 'rgba(255, 255, 255, 0.05)';
+                questionDiv.style.padding = '10px';
+                questionDiv.style.borderRadius = '8px';
+                questionDiv.style.marginBottom = '10px';
+                
+                const currentAnswer = this.examAnswerKey[questionNum];
+                const letters = ['أ', 'ب', 'ج', 'د', 'هـ', 'و', 'ز', 'ح', 'ط', 'ي'];
+                const options = letters.slice(0, optionsCount);
+                
+                questionDiv.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <span style="font-weight: bold; min-width: 40px;">س${questionNum}:</span>
+                        <div class="flex flex-wrap gap-1" style="flex: 1;">
+                            ${options.map(opt => {
+                                const isSelected = currentAnswer === opt;
+                                return `
+                                    <button type="button" class="answer-btn" data-question="${questionNum}" data-option="${opt}"
+                                            style="padding: 8px 12px; border: 2px solid ${isSelected ? this.config.primaryColor : this.config.secondaryColor}; 
+                                                   border-radius: 5px; background: ${isSelected ? this.config.primaryColor : 'transparent'}; 
+                                                   color: ${isSelected ? 'white' : this.config.textColor};
+                                                   cursor: pointer; font-weight: bold; min-width: 40px;">
+                                        ${opt}
+                                    </button>
+                                `;
+                            }).join('')}
+                        </div>
+                        <small style="color: ${this.config.secondaryColor}">${optionsCount} خيارات</small>
+                    </div>
+                `;
+                
+                return questionDiv;
+            }
+            
+            setupAnswerKeyButtons() {
+                const answerBtns = document.querySelectorAll('.answer-btn');
+                answerBtns.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const question = e.target.getAttribute('data-question');
+                        const option = e.target.getAttribute('data-option');
+                        this.selectExamAnswer(question, option);
+                    });
+                });
+            }
+            
+            renderDesignSheet() {
+                const mainContent = document.getElementById('main-content');
+                const myExams = this.data.exams.filter(e => e.teacher_id === this.currentTeacher.id);
+                
+                if (myExams.length === 0) {
+                    mainContent.innerHTML = `
+                        <div class="card text-center">
+                            <div style="font-size: 4rem; margin-bottom: 20px;">📝</div>
+                            <h3>لا توجد اختبارات متاحة لتصميم ورقة الإجابة</h3>
+                            <p style="color: ${this.config.secondaryColor}; margin-bottom: 20px;">يجب إنشاء اختبار أولاً قبل تصميم الورقة</p>
+                            <button onclick="app.navigateTo('create-exam')" class="btn btn-primary">
+                                إنشاء اختبار جديد
+                            </button>
+                            
+                            <div class="navigation-buttons">
+                                <button onclick="app.navigateTo('dashboard')" class="btn btn-secondary">
+                                    ← رجوع للوحة التحكم
+                                </button>
+                                <div></div>
+                            </div>
+                        </div>
+                    `;
                     return;
                 }
                 
-                this.showToast('🖨️ جاري إعداد ورقة الإجابة للطباعة...', 'warning');
+                if (!this.currentExam) {
+                    mainContent.innerHTML = `
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="card">
+                                <h2>📄 اختر الاختبار لتصميم الورقة</h2>
+                                
+                                <div class="form-group">
+                                    <label for="exam-selector-sheet">اختر الاختبار:</label>
+                                    <select id="exam-selector-sheet" class="form-control">
+                                        <option value="">-- اختر اختباراً --</option>
+                                        ${myExams.map(exam => {
+                                            return `<option value="${exam.id}">${exam.exam_title} - ${exam.exam_subject} (${exam.num_questions} سؤال)</option>`;
+                                        }).join('')}
+                                    </select>
+                                </div>
+                                
+                                <div class="navigation-buttons">
+                                    <button onclick="app.navigateTo('dashboard')" class="btn btn-secondary">
+                                        ← رجوع للوحة التحكم
+                                    </button>
+                                    <div></div>
+                                </div>
+                            </div>
+                            
+                            <div class="card">
+                                <h2>📋 معلومات حول أوراق الإجابة</h2>
+                                <div class="instructions-panel">
+                                    <h4>🎯 مميزات ورقات SamieGrade:</h4>
+                                    <ul class="instructions-list">
+                                        <li>علامات معايرة في الزوايا والأطراف</li>
+                                        <li>بيانات الطالب الكاملة (الاسم، الرقم، الصف، الشعبة)</li>
+                                        <li>تعليمات واضحة للملء</li>
+                                        <li>دوائر موحدة الحجم والتباعد</li>
+                                        <li>تنسيق أبيض وأسود عالي التباين</li>
+                                        <li>جميع الأسئلة في صفحة واحدة فقط</li>
+                                        <li>مناسبة للتصحيح الآلي بالكاميرا</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    const examSelector = document.getElementById('exam-selector-sheet');
+                    if (examSelector) {
+                        examSelector.addEventListener('change', () => {
+                            const examId = examSelector.value;
+                            if (examId) {
+                                this.selectExamForSheetDesign(examId);
+                            }
+                        });
+                    }
+                    
+                    return;
+                }
                 
-                // إنشاء محتوى ورقة الإجابة
-                const printSheet = document.getElementById('print-sheet');
-                printSheet.innerHTML = this.generateAnswerSheetHTML(exam);
+                const exam = this.currentExam;
                 
-                // تأخير بسيط لضمان تحميل المحتوى
-                setTimeout(() => {
-                    window.print();
-                    this.showToast('✅ تم فتح نافذة الطباعة', 'success');
-                }, 500);
+                mainContent.innerHTML = `
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="card">
+                            <h2>🎨 تصميم ورقة الإجابة</h2>
+                            
+                            <div class="p-3 mb-3" style="background: rgba(59, 130, 246, 0.1); border-radius: 8px;">
+                                <h4>${exam.exam_title}</h4>
+                                <p style="color: ${this.config.secondaryColor}; font-size: 0.9rem;">
+                                    ${exam.exam_subject} • ${exam.num_questions} سؤال • ${this.getQuestionTypeLabel(exam.question_type)}
+                                </p>
+                                <button id="change-exam-sheet-btn" class="btn btn-secondary mt-2" style="font-size: 0.9rem;">
+                                    تغيير الاختبار
+                                </button>
+                            </div>
+                            
+                            <div class="instructions-panel mb-4">
+                                <h4>💡 تصميم صفحة واحدة</h4>
+                                <p>جميع التعليمات والبيانات والأسئلة ستكون في صفحة واحدة فقط باستخدام التنسيق المدمج.</p>
+                            </div>
+                            
+                            <div class="designer-controls">
+                                <div class="form-group">
+                                    <label for="paper-title">عنوان الورقة:</label>
+                                    <input type="text" id="paper-title" class="form-control" value="ورقة إجابة الطالب" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="include-instructions">تضمين التعليمات:</label>
+                                    <select id="include-instructions" class="form-control">
+                                        <option value="yes" selected>نعم</option>
+                                        <option value="no">لا</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="bubble-size">حجم الدوائر:</label>
+                                    <select id="bubble-size" class="form-control">
+                                        <option value="small">صغير (3.5 مم)</option>
+                                        <option value="medium" selected>متوسط (4 مم)</option>
+                                        <option value="large">كبير (4.5 مم)</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="compact-mode">وضع التصميم:</label>
+                                    <select id="compact-mode" class="form-control">
+                                        <option value="yes" selected>صفحة واحدة مدمجة</option>
+                                        <option value="no">صفحات متعددة</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-2 mt-4">
+                                <button id="preview-sheet-btn" class="btn btn-primary">
+                                    👁️ معاينة الورقة
+                                </button>
+                                <button id="print-sheet-btn" class="btn btn-success">
+                                    🖨️ طباعة الورقة
+                                </button>
+                            </div>
+                            
+                            <button id="save-sheet-design-btn" class="btn btn-info w-full mt-2">
+                                💾 حفظ التصميم
+                            </button>
+                            
+                            <div class="navigation-buttons">
+                                <button onclick="app.navigateTo('create-exam')" class="btn btn-secondary">
+                                    ← رجوع للاختبار
+                                </button>
+                                <button onclick="app.navigateTo('scan-papers')" class="btn btn-warning">
+                                    التالي للمسح →
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <h2>📋 معاينة الورقة</h2>
+                            <div id="sheet-preview-container" class="preview-container">
+                                <div id="sheet-preview" class="answer-sheet-preview"></div>
+                            </div>
+                            <div class="text-center mt-3">
+                                <p style="color: ${this.config.secondaryColor}; font-size: 0.9rem;">
+                                    💡 الملاحظة: الورقة الفعلية ستكون A4 بأبيض وأسود عالي التباين
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                this.setupDesignSheetEvents();
+                this.generateSheetPreview();
             }
             
-            // توليد HTML لورقة الإجابة
-            generateAnswerSheetHTML(exam) {
-                const answerKey = JSON.parse(exam.answer_key || '{}');
+            generateSheetPreview() {
+                const sheetPreview = document.getElementById('sheet-preview');
+                if (!sheetPreview || !this.currentExam) return;
                 
-                return `
-                    <div style="width: 210mm; min-height: 297mm; padding: 15mm; font-family: 'Cairo', Arial, sans-serif; background: white; color: black; position: relative;">
+                const bubbleSize = document.getElementById('bubble-size')?.value || 'medium';
+                const includeInstructions = document.getElementById('include-instructions')?.value === 'yes';
+                const paperTitle = document.getElementById('paper-title')?.value || 'ورقة إجابة الطالب';
+                const compactMode = document.getElementById('compact-mode')?.value === 'yes';
+                
+                // تحديد حجم الدوائر
+                let bubbleSizeMm = 4; // متوسط
+                if (bubbleSize === 'small') bubbleSizeMm = 3.5;
+                if (bubbleSize === 'large') bubbleSizeMm = 4.5;
+                
+                // تحليل مفتاح الإجابة
+                const answerKey = JSON.parse(this.currentExam.answer_key || '{}');
+                
+                // إنشاء ورقة الإجابة
+                const sheetHTML = `
+                    <div class="answer-sheet-page ${compactMode ? 'compact-mode single-page-mode' : ''}">
                         <!-- علامات المعايرة -->
                         <div class="calibration-mark top-left"></div>
                         <div class="calibration-mark top-right"></div>
@@ -1244,58 +1780,61 @@
                         <div class="calibration-mark bottom-right"></div>
                         
                         <!-- عنوان الورقة -->
-                        <div style="text-align: center; margin-bottom: 15mm;">
-                            <h1 style="font-size: 24pt; font-weight: bold; margin-bottom: 5mm; color: #000;">
-                                ورقة إجابة الطالب
+                        <div style="text-align: center; margin-bottom: ${compactMode ? '5mm' : '10mm'};">
+                            <h1 style="font-size: ${compactMode ? '16pt' : '20pt'}; font-weight: bold; margin-bottom: ${compactMode ? '1mm' : '2mm'};">
+                                ${paperTitle}
                             </h1>
-                            <h2 style="font-size: 18pt; font-weight: bold; margin-bottom: 3mm;">
-                                ${exam.exam_title}
+                            <h2 style="font-size: ${compactMode ? '12pt' : '16pt'}; font-weight: bold;">
+                                ${this.currentExam.exam_title}
                             </h2>
-                            <p style="font-size: 14pt;">
-                                ${exam.exam_subject} • ${exam.num_questions} سؤال
+                            <p style="font-size: ${compactMode ? '10pt' : '12pt'}; margin-top: ${compactMode ? '0.5mm' : '1mm'};">
+                                ${this.currentExam.exam_subject} • ${this.currentExam.num_questions} سؤال
                             </p>
                         </div>
                         
                         <!-- التعليمات -->
-                        <div style="background: #f5f5f5; padding: 5mm; border: 1mm solid #000; margin-bottom: 10mm; border-radius: 2mm;">
-                            <h3 style="font-size: 12pt; font-weight: bold; margin-bottom: 3mm; text-align: center; color: #d97706;">
-                                ⚠️ تعليمات مهمة
-                            </h3>
-                            <div style="font-size: 10pt;">
-                                <p style="margin-bottom: 2mm;">• ظلّل الدائرة كاملة بالقلم الأسود فقط</p>
-                                <p style="margin-bottom: 2mm;">• لا تستخدم × أو ✓ أو أي علامات أخرى</p>
-                                <p style="margin-bottom: 2mm;">• لا تخرج عن حدود الدائرة عند التظليل</p>
-                                <p style="margin-bottom: 2mm;">• تأكد من ملء بياناتك الشخصية بدقة</p>
+                        ${includeInstructions ? `
+                            <div style="background: #f0f0f0; padding: ${compactMode ? '2mm' : '3mm'}; border: 0.5mm solid black; 
+                                 margin-bottom: ${compactMode ? '5mm' : '8mm'}; border-radius: 2mm; font-size: ${compactMode ? '9pt' : '10pt'};">
+                                <h3 style="font-size: ${compactMode ? '9pt' : '11pt'}; font-weight: bold; margin-bottom: ${compactMode ? '1mm' : '2mm'}; text-align: center;">
+                                    ⚠️ تعليمات مهمة
+                                </h3>
+                                <div>
+                                    <p style="margin-bottom: ${compactMode ? '0.5mm' : '1mm'};">• ظلّل الدائرة كاملة بالقلم الأسود فقط</p>
+                                    <p style="margin-bottom: ${compactMode ? '0.5mm' : '1mm'};">• لا تستخدم × أو ✓ أو أي علامات أخرى</p>
+                                    <p style="margin-bottom: ${compactMode ? '0.5mm' : '1mm'};">• لا تخرج عن حدود الدائرة عند التظليل</p>
+                                    <p style="margin-bottom: ${compactMode ? '0.5mm' : '1mm'};">• تأكد من ملء بياناتك الشخصية بدقة</p>
+                                </div>
                             </div>
-                        </div>
+                        ` : ''}
                         
                         <!-- بيانات الطالب -->
-                        <div style="margin-bottom: 15mm;">
-                            <h3 style="font-size: 14pt; font-weight: bold; margin-bottom: 5mm; border-bottom: 0.5mm solid #000; padding-bottom: 2mm;">
+                        <div style="margin-bottom: ${compactMode ? '8mm' : '10mm'};">
+                            <h3 style="font-size: ${compactMode ? '10pt' : '12pt'}; font-weight: bold; margin-bottom: ${compactMode ? '2mm' : '3mm'};">
                                 📋 بيانات الطالب
                             </h3>
-                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8mm; font-size: 12pt;">
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: ${compactMode ? '3mm' : '5mm'}; font-size: ${compactMode ? '9pt' : '11pt'};">
                                 <div>
-                                    <span style="font-weight: bold;">اسم الطالب: </span>
-                                    <span style="border-bottom: 0.5mm solid #000; display: inline-block; width: 70mm; text-align: center; margin-right: 3mm;">
+                                    <span>اسم الطالب: </span>
+                                    <span class="student-info-field" style="width: ${compactMode ? '40mm' : '50mm'};">
                                         __________________________
                                     </span>
                                 </div>
                                 <div>
-                                    <span style="font-weight: bold;">رقم الطالب: </span>
-                                    <span style="border-bottom: 0.5mm solid #000; display: inline-block; width: 30mm; text-align: center; margin-right: 3mm;">
+                                    <span>رقم الطالب: </span>
+                                    <span class="student-info-field" style="width: ${compactMode ? '20mm' : '25mm'};">
                                         __________
                                     </span>
                                 </div>
                                 <div>
-                                    <span style="font-weight: bold;">الصف: </span>
-                                    <span style="border-bottom: 0.5mm solid #000; display: inline-block; width: 20mm; text-align: center; margin-right: 3mm;">
+                                    <span>الصف: </span>
+                                    <span class="student-info-field" style="width: ${compactMode ? '12mm' : '15mm'};">
                                         __________
                                     </span>
                                 </div>
                                 <div>
-                                    <span style="font-weight: bold;">الشعبة: </span>
-                                    <span style="border-bottom: 0.5mm solid #000; display: inline-block; width: 20mm; text-align: center; margin-right: 3mm;">
+                                    <span>الشعبة: </span>
+                                    <span class="student-info-field" style="width: ${compactMode ? '12mm' : '15mm'};">
                                         __________
                                     </span>
                                 </div>
@@ -1303,262 +1842,456 @@
                         </div>
                         
                         <!-- الأسئلة -->
-                        <div style="margin-bottom: 10mm;">
-                            <h3 style="font-size: 14pt; font-weight: bold; margin-bottom: 5mm; text-align: center; background: #e5e7eb; padding: 2mm; border-radius: 1mm;">
+                        <div style="margin-bottom: ${compactMode ? '5mm' : '10mm'};">
+                            <h3 style="font-size: ${compactMode ? '10pt' : '12pt'}; font-weight: bold; margin-bottom: ${compactMode ? '2mm' : '3mm'}; 
+                                text-align: center; background: #e0e0e0; padding: ${compactMode ? '1mm' : '2mm'}; border-radius: 2mm;">
                                 📝 أسئلة الاختبار
                             </h3>
                             
-                            ${this.generateQuestionsForPrint(exam, answerKey)}
+                            ${this.generateAllQuestions(answerKey, bubbleSizeMm, compactMode)}
                         </div>
                         
                         <!-- تذييل الصفحة -->
-                        <div style="position: absolute; bottom: 10mm; left: 0; right: 0; text-align: center; font-size: 9pt; color: #666; border-top: 0.3mm solid #ddd; padding-top: 3mm;">
-                            <p>نظام SamieGrade للتصحيح الآلي | التاريخ: ${new Date().toLocaleDateString('ar-SA')} | الصفحة 1 من 1</p>
+                        <div style="text-align: center; font-size: ${compactMode ? '8pt' : '9pt'}; color: #666; padding-top: ${compactMode ? '3mm' : '5mm'}; border-top: 0.5mm solid #ddd;">
+                            <p>نظام SamieGrade للتصحيح الآلي | التاريخ: ${new Date().toLocaleDateString('ar-SA')}</p>
                         </div>
                     </div>
                 `;
+                
+                sheetPreview.innerHTML = sheetHTML;
             }
             
-            generateQuestionsForPrint(exam, answerKey) {
+            generateAllQuestions(answerKey, bubbleSizeMm, compactMode) {
+                const exam = this.currentExam;
                 let html = '';
-                let questionIndex = 1;
+                
+                let currentQuestion = 1;
                 
                 // أسئلة الاختيار من متعدد
-                if (exam.mc_count > 0 || exam.question_type === 'multiple_choice') {
-                    const count = exam.question_type === 'multiple_choice' ? exam.num_questions : exam.mc_count;
-                    
-                    for (let i = 0; i < count; i++) {
-                        html += `
-                            <div style="margin-bottom: 5mm; padding: 2mm; border: 0.3mm solid #ddd; border-radius: 1mm; page-break-inside: avoid;">
-                                <div style="font-weight: bold; font-size: 11pt; margin-bottom: 2mm;">
-                                    س${questionIndex} - اختر الإجابة الصحيحة:
-                                </div>
-                                <div style="display: flex; justify-content: space-around;">
-                                    ${['أ', 'ب', 'ج', 'د'].map(letter => `
-                                        <div style="text-align: center;">
-                                            <div class="bubble"></div>
-                                            <div style="font-size: 10pt; margin-top: 1mm;">${letter}</div>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            </div>
-                        `;
-                        questionIndex++;
-                    }
+                if (exam.mc_count > 0) {
+                    html += this.generateMCQuestions(exam.mc_count, currentQuestion, bubbleSizeMm, compactMode);
+                    currentQuestion += exam.mc_count;
                 }
                 
                 // أسئلة صح/خطأ
-                if (exam.tf_count > 0 || exam.question_type === 'true_false') {
-                    const count = exam.question_type === 'true_false' ? exam.num_questions : exam.tf_count;
-                    
-                    for (let i = 0; i < count; i++) {
-                        html += `
-                            <div style="margin-bottom: 5mm; padding: 2mm; border: 0.3mm solid #ddd; border-radius: 1mm; page-break-inside: avoid;">
-                                <div style="font-weight: bold; font-size: 11pt; margin-bottom: 2mm;">
-                                    س${questionIndex} - ضع ✓ للصح و ✗ للخطأ:
-                                </div>
-                                <div style="display: flex; justify-content: space-around; gap: 10mm;">
-                                    <div style="text-align: center;">
-                                        <div class="bubble"></div>
-                                        <div style="font-size: 10pt; margin-top: 1mm;">صح (✓)</div>
-                                    </div>
-                                    <div style="text-align: center;">
-                                        <div class="bubble"></div>
-                                        <div style="font-size: 10pt; margin-top: 1mm;">خطأ (✗)</div>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                        questionIndex++;
-                    }
+                if (exam.tf_count > 0) {
+                    html += this.generateTFQuestions(exam.tf_count, currentQuestion, bubbleSizeMm, compactMode);
+                    currentQuestion += exam.tf_count;
                 }
                 
                 // أسئلة المطابقة
-                if (exam.match_count > 0 || exam.question_type === 'matching') {
-                    const count = exam.question_type === 'matching' ? exam.num_questions : exam.match_count;
-                    const options = ['أ', 'ب', 'ج', 'د', 'هـ'];
-                    
-                    for (let i = 0; i < count; i++) {
-                        html += `
-                            <div style="margin-bottom: 5mm; padding: 2mm; border: 0.3mm solid #ddd; border-radius: 1mm; page-break-inside: avoid;">
-                                <div style="font-weight: bold; font-size: 11pt; margin-bottom: 2mm;">
-                                    س${questionIndex} - اختر الحرف المناسب:
-                                </div>
-                                <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 2mm;">
-                                    ${options.map(letter => `
-                                        <div style="text-align: center;">
-                                            <div class="bubble"></div>
-                                            <div style="font-size: 10pt; margin-top: 1mm;">${letter}</div>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            </div>
-                        `;
-                        questionIndex++;
-                    }
+                if (exam.match_count > 0) {
+                    html += this.generateMatchQuestions(exam.match_count, currentQuestion, bubbleSizeMm, compactMode);
+                    currentQuestion += exam.match_count;
+                }
+                
+                // الأسئلة حسب النوع إذا لم يكن مختلطاً
+                if (exam.question_type === 'multiple_choice') {
+                    html = this.generateMCQuestions(exam.num_questions, 1, bubbleSizeMm, compactMode);
+                } else if (exam.question_type === 'true_false') {
+                    html = this.generateTFQuestions(exam.num_questions, 1, bubbleSizeMm, compactMode);
+                } else if (exam.question_type === 'matching') {
+                    html = this.generateMatchQuestions(exam.num_questions, 1, bubbleSizeMm, compactMode);
                 }
                 
                 return html;
             }
             
-            // وظائف قراءة الخط اليدوي باستخدام OCR
-            async processHandwriting(imageData) {
-                if (!this.tesseractWorker) {
-                    this.showToast('⚠️ لم يتم تهيئة نظام قراءة الخط اليدوي', 'warning');
-                    return null;
-                }
+            generateMCQuestions(count, startIndex, bubbleSizeMm, compactMode) {
+                const options = ['أ', 'ب', 'ج', 'د'];
+                const itemsPerRow = compactMode ? 4 : 3;
+                const numRows = Math.ceil(count / itemsPerRow);
                 
-                this.showOcrProcessing(true);
+                let html = '';
                 
-                try {
-                    // معالجة الصورة باستخدام Tesseract.js
-                    const result = await this.tesseractWorker.recognize(imageData);
+                for (let row = 0; row < numRows; row++) {
+                    html += `<div style="display: grid; grid-template-columns: repeat(${itemsPerRow}, 1fr); gap: ${compactMode ? '1mm' : '2mm'}; margin-bottom: ${compactMode ? '2mm' : '4mm'};">`;
                     
-                    this.showOcrProcessing(false);
-                    
-                    if (result && result.data && result.data.text) {
-                        this.showToast('✅ تم قراءة النص بنجاح', 'success');
+                    for (let col = 0; col < itemsPerRow; col++) {
+                        const questionNum = row * itemsPerRow + col + 1;
+                        if (questionNum > count) break;
                         
-                        // عرض النتائج في نافذة معاينة
-                        this.showOcrPreview(result.data.text);
-                        
-                        return result.data.text;
-                    } else {
-                        this.showToast('⚠️ لم يتم العثور على نص في الصورة', 'warning');
-                        return null;
+                        html += `
+                            <div style="border: 0.5mm solid #ddd; border-radius: 2mm; padding: ${compactMode ? '1mm' : '2mm'};">
+                                <div style="font-weight: bold; font-size: ${compactMode ? '9pt' : '10pt'}; margin-bottom: ${compactMode ? '0.5mm' : '1mm'};">
+                                    س${startIndex + questionNum - 1}
+                                </div>
+                                <div style="display: flex; justify-content: space-around;">
+                                    ${options.map(letter => 
+                                        `<div style="text-align: center;">
+                                            <div class="bubble" style="width: ${bubbleSizeMm}mm; height: ${bubbleSizeMm}mm;"></div>
+                                            <div style="font-size: ${compactMode ? '8pt' : '9pt'}; margin-top: 0.5mm;">${letter}</div>
+                                        </div>`
+                                    ).join('')}
+                                </div>
+                            </div>
+                        `;
                     }
-                } catch (error) {
-                    console.error('خطأ في قراءة الخط اليدوي:', error);
-                    this.showOcrProcessing(false);
-                    this.showToast('❌ فشل في قراءة الخط اليدوي', 'error');
-                    return null;
+                    
+                    html += '</div>';
+                }
+                
+                return html;
+            }
+            
+            generateTFQuestions(count, startIndex, bubbleSizeMm, compactMode) {
+                const itemsPerRow = compactMode ? 5 : 4;
+                const numRows = Math.ceil(count / itemsPerRow);
+                const options = [
+                    { value: 'صح', letter: '✓' },
+                    { value: 'خطأ', letter: '✗' }
+                ];
+                
+                let html = '';
+                
+                for (let row = 0; row < numRows; row++) {
+                    html += `<div style="display: grid; grid-template-columns: repeat(${itemsPerRow}, 1fr); gap: ${compactMode ? '1mm' : '2mm'}; margin-bottom: ${compactMode ? '2mm' : '4mm'};">`;
+                    
+                    for (let col = 0; col < itemsPerRow; col++) {
+                        const questionNum = row * itemsPerRow + col + 1;
+                        if (questionNum > count) break;
+                        
+                        html += `
+                            <div style="border: 0.5mm solid #ddd; border-radius: 2mm; padding: ${compactMode ? '1mm' : '2mm'};">
+                                <div style="font-weight: bold; font-size: ${compactMode ? '9pt' : '10pt'}; margin-bottom: ${compactMode ? '0.5mm' : '1mm'};">
+                                    س${startIndex + questionNum - 1}
+                                </div>
+                                <div style="display: flex; justify-content: space-around;">
+                                    ${options.map(item => 
+                                        `<div style="text-align: center;">
+                                            <div class="bubble" style="width: ${bubbleSizeMm}mm; height: ${bubbleSizeMm}mm;"></div>
+                                            <div style="font-size: ${compactMode ? '8pt' : '9pt'}; margin-top: 0.5mm;">${item.value}</div>
+                                        </div>`
+                                    ).join('')}
+                                </div>
+                            </div>
+                        `;
+                    }
+                    
+                    html += '</div>';
+                }
+                
+                return html;
+            }
+            
+            generateMatchQuestions(count, startIndex, bubbleSizeMm, compactMode) {
+                const letters = ['أ', 'ب', 'ج', 'د', 'هـ', 'و', 'ز', 'ح', 'ط', 'ي'];
+                const matchOptions = this.currentExam.match_options || 5;
+                const options = letters.slice(0, matchOptions);
+                const itemsPerRow = compactMode ? 3 : 2;
+                const numRows = Math.ceil(count / itemsPerRow);
+                
+                let html = '';
+                
+                for (let row = 0; row < numRows; row++) {
+                    html += `<div style="display: grid; grid-template-columns: repeat(${itemsPerRow}, 1fr); gap: ${compactMode ? '2mm' : '4mm'}; margin-bottom: ${compactMode ? '3mm' : '6mm'};">`;
+                    
+                    for (let col = 0; col < itemsPerRow; col++) {
+                        const questionNum = row * itemsPerRow + col + 1;
+                        if (questionNum > count) break;
+                        
+                        html += `
+                            <div style="border: 0.5mm solid #ddd; border-radius: 2mm; padding: ${compactMode ? '1mm' : '2mm'};">
+                                <div style="font-weight: bold; font-size: ${compactMode ? '9pt' : '10pt'}; margin-bottom: ${compactMode ? '1mm' : '2mm'}; text-align: center;">
+                                    س${startIndex + questionNum - 1}
+                                </div>
+                                <div style="display: grid; grid-template-columns: repeat(${Math.min(matchOptions, 5)}, 1fr); gap: ${compactMode ? '0.5mm' : '1mm'};">
+                                    ${options.map(letter => 
+                                        `<div style="text-align: center;">
+                                            <div class="bubble" style="width: ${bubbleSizeMm}mm; height: ${bubbleSizeMm}mm; margin: 0 auto;"></div>
+                                            <div style="font-size: ${compactMode ? '8pt' : '9pt'}; margin-top: 0.5mm;">${letter}</div>
+                                        </div>`
+                                    ).join('')}
+                                </div>
+                                ${matchOptions > 5 ? 
+                                    `<div style="display: grid; grid-template-columns: repeat(${matchOptions - 5}, 1fr); gap: ${compactMode ? '0.5mm' : '1mm'}; margin-top: ${compactMode ? '0.5mm' : '1mm'};">` +
+                                    letters.slice(5, matchOptions).map(letter => 
+                                        `<div style="text-align: center;">
+                                            <div class="bubble" style="width: ${bubbleSizeMm}mm; height: ${bubbleSizeMm}mm; margin: 0 auto;"></div>
+                                            <div style="font-size: ${compactMode ? '8pt' : '9pt'}; margin-top: 0.5mm;">${letter}</div>
+                                        </div>`
+                                    ).join('') + '</div>' : ''
+                                }
+                            </div>
+                        `;
+                    }
+                    
+                    html += '</div>';
+                }
+                
+                return html;
+            }
+            
+            setupDesignSheetEvents() {
+                const changeExamSheetBtn = document.getElementById('change-exam-sheet-btn');
+                if (changeExamSheetBtn) {
+                    changeExamSheetBtn.addEventListener('click', () => {
+                        this.currentExam = null;
+                        this.renderDesignSheet();
+                    });
+                }
+                
+                const previewSheetBtn = document.getElementById('preview-sheet-btn');
+                if (previewSheetBtn) {
+                    previewSheetBtn.addEventListener('click', () => this.generateSheetPreview());
+                }
+                
+                const printSheetBtn = document.getElementById('print-sheet-btn');
+                if (printSheetBtn) {
+                    printSheetBtn.addEventListener('click', () => this.printAnswerSheet());
+                }
+                
+                const saveSheetDesignBtn = document.getElementById('save-sheet-design-btn');
+                if (saveSheetDesignBtn) {
+                    saveSheetDesignBtn.addEventListener('click', () => this.saveSheetDesign());
+                }
+                
+                const bubbleSize = document.getElementById('bubble-size');
+                if (bubbleSize) {
+                    bubbleSize.addEventListener('change', () => this.generateSheetPreview());
+                }
+                
+                const compactMode = document.getElementById('compact-mode');
+                if (compactMode) {
+                    compactMode.addEventListener('change', () => this.generateSheetPreview());
+                }
+                
+                const includeInstructions = document.getElementById('include-instructions');
+                if (includeInstructions) {
+                    includeInstructions.addEventListener('change', () => this.generateSheetPreview());
+                }
+                
+                const paperTitle = document.getElementById('paper-title');
+                if (paperTitle) {
+                    paperTitle.addEventListener('input', () => this.generateSheetPreview());
                 }
             }
             
-            showOcrProcessing(show) {
-                const ocrProcessing = document.getElementById('ocr-processing');
-                if (show) {
-                    ocrProcessing.classList.remove('hidden');
-                } else {
-                    ocrProcessing.classList.add('hidden');
-                }
-            }
-            
-            showOcrPreview(text) {
+            renderScanPapers() {
                 const mainContent = document.getElementById('main-content');
-                const previewHTML = `
-                    <div class="card">
-                        <h2>✍️ نتيجة قراءة الخط اليدوي</h2>
-                        <div class="ocr-preview">
-                            ${text}
+                const myExams = this.data.exams.filter(e => e.teacher_id === this.currentTeacher.id);
+                
+                if (myExams.length === 0) {
+                    mainContent.innerHTML = `
+                        <div class="card text-center">
+                            <div style="font-size: 4rem; margin-bottom: 20px;">📝</div>
+                            <h3>لا توجد اختبارات متاحة للمسح</h3>
+                            <p style="color: ${this.config.secondaryColor}; margin-bottom: 20px;">يجب إنشاء اختبار أولاً قبل البدء في المسح</p>
+                            <button onclick="app.navigateTo('create-exam')" class="btn btn-primary">
+                                إنشاء اختبار جديد
+                            </button>
+                            
+                            <div class="navigation-buttons">
+                                <button onclick="app.navigateTo('design-sheet')" class="btn btn-secondary">
+                                    ← رجوع لتصميم الورقة
+                                </button>
+                                <div></div>
+                            </div>
                         </div>
-                        <div class="flex gap-2 mt-3">
-                            <button onclick="app.saveOcrText()" class="btn btn-success">
-                                💾 حفظ النتائج
-                            </button>
-                            <button onclick="app.closeOcrPreview()" class="btn btn-secondary">
-                                ❌ إغلاق
-                            </button>
+                    `;
+                    return;
+                }
+                
+                if (!this.currentExam) {
+                    mainContent.innerHTML = `
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="card">
+                                <h2>📷 اختر الاختبار للمسح</h2>
+                                
+                                <div class="form-group">
+                                    <label for="exam-selector">اختر الاختبار:</label>
+                                    <select id="exam-selector" class="form-control">
+                                        <option value="">-- اختر اختباراً --</option>
+                                        ${myExams.map(exam => {
+                                            const label = this.getQuestionTypeLabel(exam.question_type);
+                                            return `<option value="${exam.id}">${exam.exam_title} - ${exam.exam_subject} (${label})</option>`;
+                                        }).join('')}
+                                    </select>
+                                </div>
+                                
+                                <div class="instructions-panel">
+                                    <h4>💡 كيفية المسح:</h4>
+                                    <ul class="instructions-list">
+                                        <li>اختر الاختبار المطلوب من القائمة</li>
+                                        <li>اضغط على زر "فتح الكاميرا للمسح"</li>
+                                        <li>ضع ورقة الطالب داخل الإطار على الشاشة</li>
+                                        <li>اضغط على زر التقاط الصورة</li>
+                                        <li>انتظر حتى تتم معالجة النتيجة</li>
+                                    </ul>
+                                </div>
+                                
+                                <div class="navigation-buttons">
+                                    <button onclick="app.navigateTo('design-sheet')" class="btn btn-secondary">
+                                        ← رجوع لتصميم الورقة
+                                    </button>
+                                    <div></div>
+                                </div>
+                            </div>
+                            
+                            <div class="card">
+                                <h2>📋 معلومات حول المسح الضوئي</h2>
+                                <div class="p-3 mb-2" style="background: rgba(59, 130, 246, 0.1); border-radius: 8px;">
+                                    <h4>🎯 متطلبات المسح الناجح:</h4>
+                                    <ul style="padding-right: 20px; margin-top: 10px;">
+                                        <li style="margin-bottom: 5px;">إضاءة جيدة وموحدة</li>
+                                        <li style="margin-bottom: 5px;">وضع الورقة بشكل أفقي داخل الإطار</li>
+                                        <li style="margin-bottom: 5px;">عدم وجود ظلال على الورقة</li>
+                                        <li style="margin-bottom: 5px;">استخدام قلم أسود للتظليل</li>
+                                        <li style="margin-bottom: 5px;">تعبئة الدوائر بشكل كامل</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    const examSelector = document.getElementById('exam-selector');
+                    if (examSelector) {
+                        examSelector.addEventListener('change', () => this.handleExamSelection());
+                    }
+                    
+                    return;
+                }
+                
+                const exam = this.currentExam;
+                
+                mainContent.innerHTML = `
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="card">
+                            <h2>📷 مسح ورقة الطالب</h2>
+                            
+                            <div class="p-3 mb-3" style="background: rgba(59, 130, 246, 0.1); border-radius: 8px;">
+                                <h4>${exam.exam_title}</h4>
+                                <p style="color: ${this.config.secondaryColor}; font-size: 0.9rem;">
+                                    ${exam.exam_subject} • ${exam.num_questions} سؤال • ${this.getQuestionTypeLabel(exam.question_type)}
+                                </p>
+                                <button id="change-exam-btn" class="btn btn-secondary mt-2" style="font-size: 0.9rem;">
+                                    تغيير الاختبار
+                                </button>
+                            </div>
+                            
+                            <div class="text-center p-4">
+                                <div style="font-size: 4rem; margin-bottom: 20px;">📄</div>
+                                <h4>جهز ورقة الإجابة للمسح</h4>
+                                <p style="color: ${this.config.secondaryColor}; margin-bottom: 20px;">
+                                    تأكد من أن الورقة في وضع أفقي وأن جميع الدوائر مرئية بوضوح
+                                </p>
+                                
+                                <div class="permission-help">
+                                    <h4>💡 نصائح للمسح الضوئي:</h4>
+                                    <ol>
+                                        <li>ضع الورقة على سطح مستوٍ</li>
+                                        <li>تأكد من وجود إضاءة كافية</li>
+                                        <li>قم بمحاذاة الورقة مع الإطار على الشاشة</li>
+                                        <li>تجنب وجود ظلال على الورقة</li>
+                                    </ol>
+                                </div>
+                                
+                                <div class="grid grid-cols-2 gap-2 mt-3">
+                                    <button id="open-camera-btn" class="btn btn-primary">
+                                        📷 فتح الكاميرا للمسح
+                                    </button>
+                                    <button id="quick-test-btn" class="btn btn-warning">
+                                        ⚡ اختبار سريع
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div id="scanning-progress" class="hidden mt-3"></div>
+                            
+                            <div class="navigation-buttons">
+                                <button onclick="app.navigateTo('design-sheet')" class="btn btn-secondary">
+                                    ← رجوع لتصميم الورقة
+                                </button>
+                                <button onclick="app.navigateTo('results')" class="btn btn-info">
+                                    عرض النتائج →
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <h2>📊 النتائج الفورية</h2>
+                            <div id="quick-stats" class="text-center p-4">
+                                <div style="color: ${this.config.secondaryColor}">
+                                    <p>ابدأ المسح لرؤية النتائج هنا</p>
+                                    <div style="font-size: 3rem; margin-top: 20px;">📈</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 `;
                 
-                // إضافة المعاينة إلى المحتوى الرئيسي
-                mainContent.innerHTML += previewHTML;
+                this.setupScanPapersEvents();
             }
             
-            saveOcrText() {
-                // هنا يمكن حفظ النتائج في قاعدة البيانات
-                this.showToast('💾 تم حفظ نتائج قراءة الخط اليدوي', 'success');
-                this.closeOcrPreview();
+            renderResults() {
+                const myResults = this.data.results.filter(r => r.teacher_id === this.currentTeacher.id);
+                
+                const mainContent = document.getElementById('main-content');
+                mainContent.innerHTML = `
+                    <div class="card">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2>📊 جميع النتائج</h2>
+                            <div class="flex gap-2">
+                                <button onclick="app.navigateTo('dashboard')" class="btn btn-secondary">
+                                    ← رجوع للوحة التحكم
+                                </button>
+                            </div>
+                        </div>
+                        
+                        ${myResults.length === 0 ? `
+                            <div class="text-center p-8" style="color: ${this.config.secondaryColor}">
+                                <div style="font-size: 3rem; margin-bottom: 20px;">📊</div>
+                                <p>لا توجد نتائج محفوظة بعد</p>
+                                <p>ابدأ بمسح أوراق الطلاب لرؤية النتائج هنا</p>
+                            </div>
+                        ` : `
+                            <div>
+                                ${myResults.slice().reverse().map(result => `
+                                    <div class="flex justify-between items-center p-3 mb-2" 
+                                         style="background: rgba(255, 255, 255, 0.05); border-radius: 8px;">
+                                        <div>
+                                            <h4 style="font-weight: bold;">${result.student_name}</h4>
+                                            <p style="color: ${this.config.secondaryColor}; font-size: 0.9rem;">
+                                                ${result.exam_title} • ${result.exam_subject} • رقم: ${result.student_id}
+                                            </p>
+                                            <p style="color: ${this.config.secondaryColor}; font-size: 0.8rem;">
+                                                ${new Date(result.created_at).toLocaleString('ar-SA')}
+                                            </p>
+                                        </div>
+                                        <div class="text-left">
+                                            <div style="font-size: 2rem; font-weight: bold; 
+                                                 color: ${result.percentage >= 50 ? this.config.primaryColor : '#ef4444'}">
+                                                ${result.percentage}%
+                                            </div>
+                                            <p style="text-align: left;">${result.score}/${result.num_questions}</p>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        `}
+                        
+                        <div class="navigation-buttons">
+                            <button onclick="app.navigateTo('scan-papers')" class="btn btn-secondary">
+                                ← رجوع للمسح
+                            </button>
+                            <div></div>
+                        </div>
+                    </div>
+                `;
             }
             
-            closeOcrPreview() {
-                const previewElement = document.querySelector('.ocr-preview')?.closest('.card');
-                if (previewElement) {
-                    previewElement.remove();
-                }
+            // وظائف المساعدة
+            getQuestionTypeLabel(type) {
+                const labels = {
+                    'multiple_choice': 'اختيار من متعدد',
+                    'true_false': 'صح/خطأ',
+                    'matching': 'مطابقة',
+                    'mixed': 'أنواع مختلطة'
+                };
+                return labels[type] || type;
             }
             
-            // وظائف الكاميرا والممسح الضوئي
-            async openCamera() {
-                this.showToast('📷 جاري فتح الكاميرا...', 'warning');
-                
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({
-                        video: {
-                            facingMode: "environment",
-                            width: { ideal: 1920 },
-                            height: { ideal: 1080 }
-                        }
-                    });
-                    
-                    this.cameraStream = stream;
-                    
-                    const cameraFullscreen = document.getElementById('camera-fullscreen');
-                    const video = document.getElementById('camera-video');
-                    
-                    video.srcObject = stream;
-                    cameraFullscreen.classList.remove('hidden');
-                    
-                    document.getElementById('close-camera-btn').addEventListener('click', () => this.closeCamera());
-                    document.getElementById('capture-btn').addEventListener('click', () => this.captureFromCamera());
-                    document.getElementById('ocr-btn').addEventListener('click', () => this.captureForOcr());
-                    
-                    this.showToast('✅ تم فتح الكاميرا بنجاح!', 'success');
-                    
-                } catch (error) {
-                    console.error('خطأ في فتح الكاميرا:', error);
-                    this.showToast('❌ فشل في فتح الكاميرا', 'error');
-                }
-            }
-            
-            closeCamera() {
-                if (this.cameraStream) {
-                    this.cameraStream.getTracks().forEach(track => track.stop());
-                    this.cameraStream = null;
-                }
-                
-                document.getElementById('camera-fullscreen').classList.add('hidden');
-            }
-            
-            async captureFromCamera() {
-                this.showToast('📸 جاري التقاط الصورة...', 'warning');
-                
-                const video = document.getElementById('camera-video');
-                const canvas = document.createElement('canvas');
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                
-                this.closeCamera();
-                
-                // محاكاة معالجة الصورة
-                await this.processScannedPaper();
-            }
-            
-            async captureForOcr() {
-                this.showToast('✍️ جاري التقاط صورة لقراءة الخط اليدوي...', 'warning');
-                
-                const video = document.getElementById('camera-video');
-                const canvas = document.createElement('canvas');
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                
-                const imageData = canvas.toDataURL('image/jpeg');
-                
-                this.closeCamera();
-                
-                // معالجة الصورة باستخدام OCR
-                await this.processHandwriting(imageData);
-            }
-            
-            // وظائف العرض الأساسية (مختصرة للاختصار)
+            // وظائف الأحداث
             handleLogin(e) {
                 e.preventDefault();
                 
@@ -1583,7 +2316,9 @@
                 }
                 
                 this.currentTeacher = teacher;
-                this.navigateTo('dashboard');
+                this.currentStep = 'dashboard';
+                this.renderProgressBar();
+                this.renderMainContent();
             }
             
             logout() {
@@ -1601,116 +2336,296 @@
                 this.renderMainContent();
             }
             
-            renderResults() {
-                const myResults = this.data.results.filter(r => r.teacher_id === this.currentTeacher.id);
+            selectExamAnswer(question, option) {
+                const buttons = document.querySelectorAll(`[data-question="${question}"]`);
+                buttons.forEach(btn => {
+                    btn.style.background = 'transparent';
+                    btn.style.borderColor = this.config.secondaryColor;
+                    btn.style.color = this.config.textColor;
+                });
                 
-                const mainContent = document.getElementById('main-content');
-                mainContent.innerHTML = `
-                    <div class="card">
-                        <div class="flex justify-between items-center mb-4">
-                            <h2>📊 جميع النتائج</h2>
-                            <div class="flex gap-2">
-                                <button onclick="app.navigateTo('dashboard')" class="btn btn-secondary">
-                                    ← رجوع للوحة التحكم
-                                </button>
-                                ${myResults.length > 0 ? `
-                                    <button onclick="app.exportToExcel()" class="btn btn-excel">
-                                        📊 تصدير إلى Excel
-                                    </button>
-                                ` : ''}
-                            </div>
-                        </div>
-                        
-                        ${myResults.length === 0 ? `
-                            <div class="text-center p-8" style="color: #94a3b8">
-                                <div style="font-size: 3rem; margin-bottom: 20px;">📊</div>
-                                <p>لا توجد نتائج محفوظة بعد</p>
-                                <p>ابدأ بمسح أوراق الطلاب لرؤية النتائج هنا</p>
-                            </div>
-                        ` : `
-                            <div class="export-options">
-                                <h4>📊 خيارات التصدير</h4>
-                                <div class="export-controls">
-                                    <button onclick="app.exportToExcel()" class="btn btn-excel">
-                                        📊 تصدير الكل إلى Excel
-                                    </button>
-                                    ${this.currentExam ? `
-                                        <button onclick="app.exportCurrentExamToExcel()" class="btn btn-info">
-                                            📝 تصدير هذا الاختبار فقط
-                                        </button>
-                                    ` : ''}
-                                </div>
-                            </div>
-                            
-                            <div style="overflow-x: auto;">
-                                <table class="results-table">
-                                    <thead>
-                                        <tr>
-                                            <th>الترتيب</th>
-                                            <th>اسم الطالب</th>
-                                            <th>رقم الطالب</th>
-                                            <th>الاختبار</th>
-                                            <th>الدرجة</th>
-                                            <th>النسبة</th>
-                                            <th>الحالة</th>
-                                            <th>التاريخ</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        ${myResults.slice().reverse().map((result, index) => {
-                                            const exam = this.data.exams.find(e => e.id === result.exam_id);
-                                            return `
-                                                <tr>
-                                                    <td>${index + 1}</td>
-                                                    <td>${result.student_name}</td>
-                                                    <td>${result.student_id}</td>
-                                                    <td>${exam ? exam.exam_title : 'غير محدد'}</td>
-                                                    <td>${result.score}/${result.num_questions}</td>
-                                                    <td style="color: ${result.percentage >= 50 ? '#3b82f6' : '#ef4444'}; font-weight: bold;">
-                                                        ${result.percentage}%
-                                                    </td>
-                                                    <td>
-                                                        <span style="background: ${result.percentage >= 50 ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'}; 
-                                                            color: ${result.percentage >= 50 ? '#10b981' : '#ef4444'}; 
-                                                            padding: 3px 8px; border-radius: 4px; font-size: 0.9rem;">
-                                                            ${result.percentage >= 50 ? 'ناجح' : 'راسب'}
-                                                        </span>
-                                                    </td>
-                                                    <td style="font-size: 0.9rem; color: #94a3b8;">
-                                                        ${new Date(result.created_at).toLocaleString('ar-SA')}
-                                                    </td>
-                                                </tr>
-                                            `;
-                                        }).join('')}
-                                    </tbody>
-                                </table>
-                            </div>
-                        `}
-                        
-                        <div class="navigation-buttons">
-                            <button onclick="app.navigateTo('scan-papers')" class="btn btn-secondary">
-                                ← رجوع للمسح
-                            </button>
-                            <div></div>
-                        </div>
-                    </div>
-                `;
+                const selectedBtn = document.querySelector(`[data-question="${question}"][data-option="${option}"]`);
+                if (selectedBtn) {
+                    selectedBtn.style.background = this.config.primaryColor;
+                    selectedBtn.style.borderColor = this.config.primaryColor;
+                    selectedBtn.style.color = 'white';
+                }
+                
+                this.examAnswerKey[question] = option;
             }
             
-            // وظائف إضافية
+            submitExam() {
+                const examTitle = document.getElementById('exam-title')?.value.trim();
+                const examSubject = document.getElementById('exam-subject')?.value.trim();
+                const questionType = document.getElementById('question-type')?.value || 'multiple_choice';
+                
+                let numQuestions, mcCount, tfCount, matchCount, matchOptions;
+                
+                if (questionType === 'mixed') {
+                    mcCount = parseInt(document.getElementById('mc-count')?.value || 20);
+                    tfCount = parseInt(document.getElementById('tf-count')?.value || 15);
+                    matchCount = parseInt(document.getElementById('match-count')?.value || 15);
+                    numQuestions = mcCount + tfCount + matchCount;
+                    matchOptions = 5; // Default for mixed
+                } else if (questionType === 'matching') {
+                    matchCount = parseInt(document.getElementById('exam-questions')?.value || 50);
+                    numQuestions = matchCount;
+                    mcCount = 0;
+                    tfCount = 0;
+                    matchOptions = parseInt(document.getElementById('match-options-count')?.value || 5);
+                } else if (questionType === 'multiple_choice') {
+                    mcCount = parseInt(document.getElementById('exam-questions')?.value || 50);
+                    numQuestions = mcCount;
+                    tfCount = 0;
+                    matchCount = 0;
+                    matchOptions = 0;
+                } else if (questionType === 'true_false') {
+                    tfCount = parseInt(document.getElementById('exam-questions')?.value || 50);
+                    numQuestions = tfCount;
+                    mcCount = 0;
+                    matchCount = 0;
+                    matchOptions = 0;
+                }
+                
+                if (!examTitle || !examSubject || numQuestions <= 0) {
+                    this.showToast('⚠️ يرجى إدخال جميع تفاصيل الاختبار', 'warning');
+                    return;
+                }
+                
+                if (Object.keys(this.examAnswerKey).length !== numQuestions) {
+                    this.showToast(`⚠️ يرجى تحديد نموذج الإجابة كاملاً (${Object.keys(this.examAnswerKey).length}/${numQuestions})`, 'warning');
+                    return;
+                }
+                
+                // التحقق من أن جميع الإجابات موجودة
+                for (let i = 1; i <= numQuestions; i++) {
+                    if (!this.examAnswerKey[i]) {
+                        this.showToast(`⚠️ يرجى تحديد الإجابة للسؤال ${i}`, 'warning');
+                        return;
+                    }
+                }
+                
+                const examData = {
+                    exam_title: examTitle,
+                    exam_subject: examSubject,
+                    num_questions: numQuestions,
+                    question_type: questionType,
+                    mc_count: mcCount,
+                    tf_count: tfCount,
+                    match_count: matchCount,
+                    match_options: matchOptions,
+                    answer_key: JSON.stringify(this.examAnswerKey),
+                    teacher_id: this.currentTeacher.id,
+                    teacher_name: this.currentTeacher.teacher_name
+                };
+                
+                this.currentExam = this.createExam(examData);
+                this.showToast('✅ تم حفظ الاختبار بنجاح', 'success');
+                
+                this.examAnswerKey = {};
+                
+                setTimeout(() => {
+                    this.currentStep = 'dashboard';
+                    this.renderProgressBar();
+                    this.renderMainContent();
+                }, 1500);
+            }
+            
+            nextToSheetDesign() {
+                this.submitExam();
+                setTimeout(() => {
+                    this.currentStep = 'design-sheet';
+                    this.renderProgressBar();
+                    this.renderMainContent();
+                }, 2000);
+            }
+            
             selectExamForScanning(examId) {
                 this.currentExam = this.data.exams.find(e => e.id === examId);
-                this.navigateTo('scan-papers');
+                this.currentStep = 'scan-papers';
+                this.renderProgressBar();
+                this.renderMainContent();
+            }
+            
+            selectExamForSheetDesign(examId) {
+                this.currentExam = this.data.exams.find(e => e.id === examId);
+                this.currentStep = 'design-sheet';
+                this.renderProgressBar();
+                this.renderMainContent();
+            }
+            
+            async openCamera() {
+                this.showToast('📷 جاري فتح الكاميرا...', 'warning');
+                
+                try {
+                    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                        throw new Error('المتصفح لا يدعم الوصول للكاميرا');
+                    }
+                    
+                    const stream = await navigator.mediaDevices.getUserMedia({
+                        video: {
+                            facingMode: "environment",
+                            width: { ideal: 1920 },
+                            height: { ideal: 1080 }
+                        }
+                    }).catch(async (error) => {
+                        return await navigator.mediaDevices.getUserMedia({
+                            video: true
+                        });
+                    });
+                    
+                    this.cameraStream = stream;
+                    
+                    const cameraFullscreen = document.getElementById('camera-fullscreen');
+                    const video = document.getElementById('camera-video');
+                    
+                    video.srcObject = stream;
+                    cameraFullscreen.classList.remove('hidden');
+                    
+                    document.getElementById('close-camera-btn').addEventListener('click', () => this.closeCamera());
+                    document.getElementById('capture-btn').addEventListener('click', () => this.captureFromCamera());
+                    
+                    this.showToast('✅ تم فتح الكاميرا بنجاح!', 'success');
+                    
+                } catch (error) {
+                    console.error('خطأ في فتح الكاميرا:', error);
+                    
+                    let errorMessage = '❌ فشل في فتح الكاميرا';
+                    
+                    if (error.name === 'NotAllowedError') {
+                        errorMessage = '❌ تم رفض إذن الكاميرا';
+                    } else if (error.name === 'NotFoundError') {
+                        errorMessage = '❌ لم يتم العثور على كاميرا';
+                    } else if (error.name === 'NotReadableError') {
+                        errorMessage = '❌ الكاميرا قيد الاستخدام';
+                    }
+                    
+                    this.showToast(errorMessage, 'error');
+                    
+                    // عرض نصائح لاستخدام الكاميرا
+                    const quickStats = document.getElementById('quick-stats');
+                    if (quickStats) {
+                        quickStats.innerHTML = `
+                            <div style="color: #ef4444; margin-bottom: 15px;">
+                                <h4>${errorMessage}</h4>
+                                <div class="permission-help">
+                                    <h4>🔧 كيفية إصلاح المشكلة:</h4>
+                                    <ol>
+                                        <li>تأكد من أن التطبيق يعمل على HTTPS</li>
+                                        <li>اسمح للوصول إلى الكاميرا عند ظهور طلب الإذن</li>
+                                        <li>تأكد من عدم استخدام كاميرا أخرى بالتطبيق</li>
+                                        <li>حاول تحديث الصفحة وإعادة المحاولة</li>
+                                    </ol>
+                                </div>
+                            </div>
+                            <button onclick="app.quickTest()" class="btn btn-warning w-full mt-3">
+                                ⚡ اختبار سريع بدون كاميرا
+                            </button>
+                        `;
+                    }
+                }
+            }
+            
+            closeCamera() {
+                if (this.cameraStream) {
+                    this.cameraStream.getTracks().forEach(track => {
+                        track.stop();
+                    });
+                    this.cameraStream = null;
+                }
+                
+                const cameraFullscreen = document.getElementById('camera-fullscreen');
+                cameraFullscreen.classList.add('hidden');
+            }
+            
+            async captureFromCamera() {
+                this.showToast('📸 جاري التقاط الصورة...', 'warning');
+                
+                const video = document.getElementById('camera-video');
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                
+                this.closeCamera();
+                
+                // محاكاة معالجة الصورة
+                await this.processScannedPaper();
+            }
+            
+            quickTest() {
+                this.showToast('⚡ بدء الاختبار السريع...', 'warning');
+                this.processScannedPaper();
+            }
+            
+            handleExamSelection() {
+                const examId = document.getElementById('exam-selector').value;
+                if (examId) {
+                    this.selectExamForScanning(examId);
+                }
+            }
+            
+            setupScanPapersEvents() {
+                const changeExamBtn = document.getElementById('change-exam-btn');
+                if (changeExamBtn) {
+                    changeExamBtn.addEventListener('click', () => {
+                        this.currentExam = null;
+                        this.renderScanPapers();
+                    });
+                }
+                
+                const openCameraBtn = document.getElementById('open-camera-btn');
+                if (openCameraBtn) {
+                    openCameraBtn.addEventListener('click', () => this.openCamera());
+                }
+                
+                const quickTestBtn = document.getElementById('quick-test-btn');
+                if (quickTestBtn) {
+                    quickTestBtn.addEventListener('click', () => this.quickTest());
+                }
             }
             
             async processScannedPaper() {
-                // محاكاة معالجة الصورة
-                this.showToast('🔍 جاري معالجة ورقة الإجابة...', 'warning');
+                const progressContainer = document.getElementById('scanning-progress');
+                if (!progressContainer || !this.currentExam) return;
                 
-                setTimeout(async () => {
-                    // محاكاة إضافة نتيجة
-                    await this.addSimulatedResult();
-                }, 2000);
+                progressContainer.classList.remove('hidden');
+                progressContainer.innerHTML = '';
+                
+                const steps = [
+                    { text: 'جاري تحليل الصورة...', icon: '🖼️' },
+                    { text: 'جاري اكتشاف ورقة الإجابة...', icon: '📄' },
+                    { text: 'جاري تحديد علامات المعايرة...', icon: '🎯' },
+                    { text: 'جاري قراءة بيانات الطالب...', icon: '👨‍🎓' },
+                    { text: 'جاري تحليل الدوائر المظللة...', icon: '🔍' },
+                    { text: 'جاري مقارنة الإجابات...', icon: '⚖️' },
+                    { text: 'جاري حساب النتيجة...', icon: '🧮' },
+                    { text: 'جاري حفظ النتائج...', icon: '💾' }
+                ];
+                
+                for (let i = 0; i < steps.length; i++) {
+                    const step = steps[i];
+                    const stepDiv = document.createElement('div');
+                    stepDiv.className = 'flex items-center gap-3 p-3 mb-2';
+                    stepDiv.style.background = 'rgba(100, 116, 139, 0.1)';
+                    stepDiv.style.borderRadius = '8px';
+                    stepDiv.innerHTML = `
+                        <div style="width: 30px; height: 30px; border-radius: 50%; background: ${this.config.primaryColor}; 
+                                    color: white; display: flex; align-items: center; justify-content: center; font-weight: bold;">
+                            ${step.icon}
+                        </div>
+                        <p>${step.text}</p>
+                    `;
+                    progressContainer.appendChild(stepDiv);
+                    
+                    stepDiv.style.animation = 'fadeIn 0.5s ease';
+                    
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+                
+                await this.addSimulatedResult();
             }
             
             async addSimulatedResult() {
@@ -1720,9 +2635,49 @@
                 const studentName = arabicNames[Math.floor(Math.random() * arabicNames.length)];
                 const studentId = 'ST' + String(Math.floor(Math.random() * 9000) + 1000);
                 
-                // محاكاة النتائج
-                const score = Math.floor(Math.random() * this.currentExam.num_questions);
-                const percentage = ((score / this.currentExam.num_questions) * 100).toFixed(1);
+                const answerKey = JSON.parse(this.currentExam.answer_key);
+                let correctCount = 0;
+                const studentAnswers = {};
+                
+                for (let i = 1; i <= this.currentExam.num_questions; i++) {
+                    const correctAnswer = answerKey[i];
+                    
+                    const isCorrect = Math.random() < 0.75;
+                    
+                    if (isCorrect) {
+                        studentAnswers[i] = correctAnswer;
+                        correctCount++;
+                    } else {
+                        let wrongAnswer;
+                        
+                        // تحديد نوع السؤال بناءً على الترتيب
+                        if (this.currentExam.question_type === 'multiple_choice' || 
+                            (this.currentExam.question_type === 'mixed' && i <= this.currentExam.mc_count)) {
+                            const options = ['أ', 'ب', 'ج', 'د'];
+                            const wrongOptions = options.filter(opt => opt !== correctAnswer);
+                            wrongAnswer = wrongOptions[Math.floor(Math.random() * wrongOptions.length)];
+                        } else if (this.currentExam.question_type === 'true_false' || 
+                                  (this.currentExam.question_type === 'mixed' && 
+                                   i > this.currentExam.mc_count && 
+                                   i <= this.currentExam.mc_count + this.currentExam.tf_count)) {
+                            wrongAnswer = correctAnswer === '✓' ? '✗' : '✓';
+                        } else {
+                            // أسئلة المطابقة
+                            const letters = ['أ', 'ب', 'ج', 'د', 'هـ', 'و', 'ز', 'ح', 'ط', 'ي'];
+                            const matchOptions = this.currentExam.match_options || 5;
+                            const options = letters.slice(0, matchOptions);
+                            const wrongOptions = options.filter(opt => opt !== correctAnswer);
+                            wrongAnswer = wrongOptions[Math.floor(Math.random() * wrongOptions.length)];
+                        }
+                        
+                        studentAnswers[i] = wrongAnswer;
+                    }
+                }
+                
+                const percentage = ((correctCount / this.currentExam.num_questions) * 100).toFixed(1);
+                const status = percentage >= 50 ? 'ناجح' : 'راسب';
+                const statusIcon = percentage >= 50 ? '✅' : '❌';
+                const statusColor = percentage >= 50 ? this.config.primaryColor : '#ef4444';
                 
                 this.createResult({
                     student_name: studentName,
@@ -1731,19 +2686,53 @@
                     exam_title: this.currentExam.exam_title,
                     exam_subject: this.currentExam.exam_subject,
                     num_questions: this.currentExam.num_questions,
-                    score: score,
+                    student_answers: JSON.stringify(studentAnswers),
+                    answer_key: this.currentExam.answer_key,
+                    score: correctCount,
                     percentage: parseFloat(percentage),
                     teacher_id: this.currentTeacher.id,
                     teacher_name: this.currentTeacher.teacher_name,
                     is_simulated: true
                 });
                 
+                const quickStats = document.getElementById('quick-stats');
+                if (quickStats) {
+                    quickStats.innerHTML = `
+                        <div class="p-4" style="background: rgba(59, 130, 246, 0.1); border-radius: 8px;">
+                            <h4>✅ نتيجة المسح الناجحة</h4>
+                            <div class="p-3 mb-2" style="background: white; border-radius: 5px; color: #333;">
+                                <p><strong>اسم الطالب:</strong> ${studentName}</p>
+                                <p><strong>رقم الطالب:</strong> ${studentId}</p>
+                                <p><strong>الاختبار:</strong> ${this.currentExam.exam_title}</p>
+                            </div>
+                            <div class="p-4" style="background: rgba(59, 130, 246, 0.2); border-radius: 8px;">
+                                <div style="font-size: 3rem; margin-bottom: 10px;">${statusIcon}</div>
+                                <div style="font-size: 2.5rem; font-weight: bold; color: ${statusColor}">
+                                    ${percentage}%
+                                </div>
+                                <p style="font-weight: bold; color: ${statusColor}">${status}</p>
+                                <p style="color: ${this.config.secondaryColor}; margin-top: 10px;">
+                                    ${correctCount} من ${this.currentExam.num_questions} إجابة صحيحة
+                                </p>
+                            </div>
+                            <div style="margin-top: 15px;">
+                                <button onclick="app.navigateTo('results')" class="btn btn-primary w-full">
+                                    📊 عرض جميع النتائج
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }
+                
                 this.showToast(`✅ تم حفظ نتيجة ${studentName} بنجاح`, 'success');
                 
-                // تحديث العرض إذا كنا في صفحة النتائج
-                if (this.currentStep === 'results') {
-                    this.renderResults();
-                }
+                setTimeout(() => {
+                    const progressContainer = document.getElementById('scanning-progress');
+                    if (progressContainer) {
+                        progressContainer.innerHTML = '';
+                        progressContainer.classList.add('hidden');
+                    }
+                }, 3000);
             }
             
             showToast(message, type = 'success') {
@@ -1762,134 +2751,44 @@
                 }, 3000);
             }
             
-            // وظائف العرض الأخرى (مختصرة للاختصار)
-            renderCreateExam() {
-                const mainContent = document.getElementById('main-content');
-                mainContent.innerHTML = `
-                    <div class="card">
-                        <h2>📝 إنشاء اختبار جديد</h2>
-                        <p style="color: #94a3b8; margin-bottom: 20px;">أضف المميزات الجديدة هنا...</p>
-                        <div class="navigation-buttons">
-                            <button onclick="app.navigateTo('dashboard')" class="btn btn-secondary">
-                                ← رجوع للوحة التحكم
-                            </button>
-                            <button onclick="app.navigateTo('design-sheet')" class="btn btn-primary">
-                                التالي →
-                            </button>
-                        </div>
-                    </div>
-                `;
-            }
-            
-            renderDesignSheet() {
-                const mainContent = document.getElementById('main-content');
-                mainContent.innerHTML = `
-                    <div class="card">
-                        <h2>📄 تصميم ورقة الإجابة</h2>
-                        <p style="color: #94a3b8; margin-bottom: 20px;">استخدم الزر أدناه لطباعة ورقة إجابة الطالب فقط</p>
-                        
-                        ${this.currentExam ? `
-                            <div class="instructions-panel">
-                                <h4>🎯 مميزات الطباعة الجديدة:</h4>
-                                <ul class="instructions-list">
-                                    <li>طباعة ورقة إجابة الطالب فقط (بدون بقية الصفحة)</li>
-                                    <li>تنسيق A4 محسّن للطباعة</li>
-                                    <li>علامات معايرة للتصحيح الآلي</li>
-                                    <li>تصميم واضح وسهل القراءة</li>
-                                </ul>
-                            </div>
-                            
-                            <div class="flex gap-2 mt-4">
-                                <button onclick="app.printStudentAnswerSheet()" class="btn btn-success">
-                                    🖨️ طباعة ورقة الإجابة
-                                </button>
-                                <button onclick="app.navigateTo('scan-papers')" class="btn btn-primary">
-                                    التالي للمسح →
-                                </button>
-                            </div>
-                        ` : `
-                            <p style="color: #ef4444; margin-bottom: 20px;">⚠️ يرجى اختيار اختبار أولاً من لوحة التحكم</p>
-                        `}
-                        
-                        <div class="navigation-buttons">
-                            <button onclick="app.navigateTo('create-exam')" class="btn btn-secondary">
-                                ← رجوع للاختبار
-                            </button>
-                            <div></div>
-                        </div>
-                    </div>
-                `;
-            }
-            
-            renderScanPapers() {
-                const mainContent = document.getElementById('main-content');
-                mainContent.innerHTML = `
-                    <div class="card">
-                        <h2>📷 مسح أوراق الطلاب</h2>
-                        
-                        ${this.currentExam ? `
-                            <div class="handwriting-option">
-                                <h4>✍️ قراءة الخط اليدوي (OCR)</h4>
-                                <p style="color: #94a3b8; margin-bottom: 10px;">
-                                    استخدم هذه الميزة لقراءة البيانات المكتوبة بخط اليد مثل اسم الطالب ورقمه
-                                </p>
-                                <button onclick="app.openCamera()" class="btn btn-warning">
-                                    📷 فتح الكاميرا لقراءة الخط اليدوي
-                                </button>
-                            </div>
-                            
-                            <div class="instructions-panel">
-                                <h4>🎯 خيارات المسح:</h4>
-                                <ul class="instructions-list">
-                                    <li>استخدم زر 📸 للمسح العادي للدوائر</li>
-                                    <li>استخدم زر ✍️ لقراءة الخط اليدوي (OCR)</li>
-                                    <li>ضع الورقة في إضاءة جيدة</li>
-                                    <li>تأكد من وضوح الكتابة</li>
-                                </ul>
-                            </div>
-                            
-                            <div class="flex gap-2 mt-4">
-                                <button onclick="app.openCamera()" class="btn btn-primary">
-                                    📷 فتح الكاميرا للمسح
-                                </button>
-                                <button onclick="app.quickTest()" class="btn btn-info">
-                                    ⚡ اختبار سريع
-                                </button>
-                            </div>
-                        ` : `
-                            <p style="color: #94a3b8; margin-bottom: 20px;">يرجى اختيار اختبار أولاً</p>
-                        `}
-                        
-                        <div class="navigation-buttons">
-                            <button onclick="app.navigateTo('design-sheet')" class="btn btn-secondary">
-                                ← رجوع لتصميم الورقة
-                            </button>
-                            <button onclick="app.navigateTo('results')" class="btn btn-info">
-                                عرض النتائج →
-                            </button>
-                        </div>
-                    </div>
-                `;
-            }
-            
-            quickTest() {
+            printAnswerSheet() {
                 if (!this.currentExam) {
                     this.showToast('⚠️ يرجى تحديد اختبار أولاً', 'warning');
                     return;
                 }
                 
-                this.showToast('⚡ بدء الاختبار السريع...', 'warning');
-                this.processScannedPaper();
+                this.showToast('🖨️ جاري إعداد الطباعة...', 'warning');
+                
+                setTimeout(() => {
+                    window.print();
+                    this.showToast('✅ تم فتح نافذة الطباعة', 'success');
+                }, 1000);
             }
             
-            // تصدير الاختبار الحالي فقط
-            exportCurrentExamToExcel() {
+            saveSheetDesign() {
                 if (!this.currentExam) {
                     this.showToast('⚠️ يرجى تحديد اختبار أولاً', 'warning');
                     return;
                 }
                 
-                this.exportToExcel();
+                const bubbleSize = document.getElementById('bubble-size')?.value || 'medium';
+                const includeInstructions = document.getElementById('include-instructions')?.value === 'yes';
+                const paperTitle = document.getElementById('paper-title')?.value || 'ورقة إجابة الطالب';
+                const compactMode = document.getElementById('compact-mode')?.value === 'yes';
+                
+                const sheetData = {
+                    exam_id: this.currentExam.id,
+                    exam_title: this.currentExam.exam_title,
+                    paper_title: paperTitle,
+                    bubble_size: bubbleSize,
+                    include_instructions: includeInstructions,
+                    compact_mode: compactMode,
+                    teacher_id: this.currentTeacher.id,
+                    created_at: new Date().toISOString()
+                };
+                
+                this.createAnswerSheet(sheetData);
+                this.showToast('💾 تم حفظ تصميم ورقة الإجابة بنجاح', 'success');
             }
         }
         
