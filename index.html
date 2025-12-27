@@ -1,28 +1,1048 @@
--- جدول المستخدمين
-CREATE TABLE users (
-    user_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username VARCHAR(50) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    full_name VARCHAR(100) NOT NULL,
-    user_type VARCHAR(20) CHECK(user_type IN ('student', 'teacher', 'admin')) NOT NULL,
-    email VARCHAR(100) UNIQUE,
-    phone VARCHAR(20),
-    grade VARCHAR(20),
-    semester VARCHAR(20),
-    is_approved BOOLEAN DEFAULT 0,
-    character_avatar VARCHAR(100),
-    current_island VARCHAR(50),
-    total_points INTEGER DEFAULT 0,
-    stars_collected INTEGER DEFAULT 0,
-    skills_mastered TEXT,
-    current_level INTEGER DEFAULT 1,
-    progress_data TEXT, -- JSON كـ TEXT
-    last_login DATETIME,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    backend_id VARCHAR(50)
-);
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SamieGrade - نظام تصحيح الاختبارات</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- مكتبة Tesseract.js لقراءة النص -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@v4.0.2/dist/tesseract.min.js"></script>
+    <!-- مكتبة jsQR -->
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    
+    <style>
+        /* جميع الأنماط السابقة تبقى كما هي */
+        /* أضيف أنماط جديدة للOCR */
+        
+        .ocr-zone {
+            position: relative;
+            border: 3px dashed #9b59b6;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+            background: rgba(155, 89, 182, 0.05);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .ocr-zone:hover {
+            background: rgba(155, 89, 182, 0.1);
+            border-color: #8e44ad;
+        }
+        
+        .ocr-zone.active {
+            border-color: #27ae60;
+            background: rgba(39, 174, 96, 0.1);
+        }
+        
+        .ocr-results {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 2px solid #3498db;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .ocr-result-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-right: 4px solid #3498db;
+        }
+        
+        .ocr-confidence {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        
+        .confidence-high {
+            background: rgba(39, 174, 96, 0.2);
+            color: #27ae60;
+        }
+        
+        .confidence-medium {
+            background: rgba(243, 156, 18, 0.2);
+            color: #f39c12;
+        }
+        
+        .confidence-low {
+            background: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+        }
+        
+        .handwriting-canvas {
+            max-width: 100%;
+            border: 2px solid #2c3e50;
+            border-radius: 10px;
+            margin: 15px 0;
+            background: white;
+        }
+        
+        .ocr-controls {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+        
+        .ocr-control-btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .ocr-process-btn {
+            background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+            color: white;
+        }
+        
+        .ocr-process-btn:hover {
+            background: linear-gradient(135deg, #8e44ad 0%, #9b59b6 100%);
+            transform: translateY(-2px);
+        }
+        
+        .ocr-clear-btn {
+            background: #e0e0e0;
+            color: #333;
+        }
+        
+        .ocr-clear-btn:hover {
+            background: #d0d0d0;
+        }
+        
+        .language-selector {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: 2px solid #3498db;
+            background: white;
+            font-size: 1rem;
+            margin: 10px 0;
+            width: 100%;
+        }
+        
+        .ocr-progress {
+            height: 10px;
+            background: #ecf0f1;
+            border-radius: 5px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        
+        .ocr-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #9b59b6, #3498db);
+            border-radius: 5px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+        
+        .ocr-status {
+            text-align: center;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 10px;
+            font-weight: 500;
+        }
+        
+        .ocr-status-processing {
+            background: rgba(52, 152, 219, 0.1);
+            border: 2px solid #3498db;
+            color: #3498db;
+        }
+        
+        .ocr-status-success {
+            background: rgba(39, 174, 96, 0.1);
+            border: 2px solid #27ae60;
+            color: #27ae60;
+        }
+        
+        .ocr-status-error {
+            background: rgba(231, 76, 60, 0.1);
+            border: 2px solid #e74c3c;
+            color: #e74c3c;
+        }
+        
+        .text-correction-tool {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 25px 0;
+            border: 3px solid #f39c12;
+            box-shadow: 0 10px 30px rgba(243, 156, 18, 0.15);
+        }
+        
+        .correction-area {
+            min-height: 150px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            padding: 20px;
+            font-size: 1.2rem;
+            line-height: 1.8;
+            margin: 20px 0;
+            background: #f9f9f9;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        .suggestions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 15px 0;
+        }
+        
+        .suggestion-btn {
+            padding: 8px 20px;
+            background: #e3f2fd;
+            border: 2px solid #3498db;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .suggestion-btn:hover {
+            background: #3498db;
+            color: white;
+        }
+        
+        .arabic-font-example {
+            font-family: 'Arial', sans-serif;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin: 15px 0;
+            border-right: 4px solid #2c3e50;
+            line-height: 2;
+        }
+        
+        .handwriting-tips {
+            background: #fff8e1;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            border-right: 5px solid #f39c12;
+        }
+        
+        .handwriting-tips h4 {
+            color: #f39c12;
+            margin-top: 0;
+        }
+        
+        .handwriting-tips ul {
+            margin: 10px 0;
+            padding-right: 20px;
+        }
+        
+        .handwriting-tips li {
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+        
+        .sample-images {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .sample-image {
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .sample-image:hover {
+            border-color: #3498db;
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.2);
+        }
+        
+        .sample-image img {
+            max-width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        
+        .accuracy-meter {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin: 15px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .accuracy-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .accuracy-label {
+            color: #666;
+        }
+        
+        .ocr-languages {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+        }
+        
+        .language-btn {
+            padding: 12px;
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .language-btn:hover {
+            border-color: #3498db;
+            background: #e3f2fd;
+        }
+        
+        .language-btn.active {
+            border-color: #27ae60;
+            background: rgba(39, 174, 96, 0.1);
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- باقي الهيكل كما هو -->
+        
+        <!-- قسم جديد لـ OCR -->
+        <div id="ocrSection" class="card hidden">
+            <h2><i class="fas fa-font"></i> قراءة النص المكتوب بخط اليد</h2>
+            
+            <div class="handwriting-tips">
+                <h4><i class="fas fa-lightbulb"></i> نصائح لقراءة أفضل:</h4>
+                <ul>
+                    <li>اكتب بخط واضح ومنظم</li>
+                    <li>استخدم قلم أزرق أو أسود داكن</li>
+                    <li>اجعل المسافة بين الكلمات واضحة</li>
+                    <li>تجنب الكتابة بخط مائل جداً</li>
+                    <li>الصورة يجب أن تكون مضاءة جيداً</li>
+                </ul>
+            </div>
+            
+            <div class="upload-area" onclick="openOCRScanner()">
+                <i class="fas fa-camera"></i>
+                <p>التقاط صورة للكتابة اليدوية</p>
+                <span>أو قم بسحب وإفلات الصورة هنا</span>
+            </div>
+            
+            <input type="file" id="ocrFileInput" accept="image/*" class="hidden" onchange="handleOCRFileUpload(event)">
+            
+            <div class="sample-images">
+                <div class="sample-image" onclick="loadSampleImage('arabic1')">
+                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICAgIDxyZWN0IHdpZHRoPSIxMDAlIiBoZWlhdGg9IjEwMCUiIGZpbGw9IiNmMGYwZjAiLz4KICAgIDx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIiBmaWxsPSIjMzMzIj4KICAgICAgIC أحمد محمد<br/>الرقم: ١٢٣٤٥<br/>الصف: العاشر أ
+ICAgIDwvdGV4dD4KPC9zdmc+" alt="عينة كتابة عربية">
+                    <p>عينة كتابة عربية</p>
+                </div>
+                <div class="sample-image" onclick="loadSampleImage('numbers')">
+                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICAgIDxyZWN0IHdpZHRoPSIxMDAlIiBoZWlhdGg9IjEwMCUiIGZpbGw9IiNmMGYwZjAiLz4KICAgIDx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIiBmaWxsPSIjMzMzIj4KICAgICAgICA١٢٣٤٥٦٧٨٩٠
+ICAgIDwvdGV4dD4KPC9zdmc+" alt="عينة أرقام">
+                    <p>أرقام بخط اليد</p>
+                </div>
+                <div class="sample-image" onclick="loadSampleImage('mixed')">
+                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICAgIDxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiNmMGYwZjAiLz4KICAgIDx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIiBmaWxsPSIjMzMzIj4KICAgICAgIC الطالب: سامي حسن<br/>الرقم: ٢٣٤٧٦<br/>التاريخ: ١٤٤٥/٠٦/١٥
+ICAgIDwvdGV4dD4KPC9zdmc+" alt="عينة مختلطة">
+                    <p>نص مختلط عربي وأرقام</p>
+                </div>
+            </div>
+            
+            <!-- منطقة معالجة الصورة -->
+            <div class="ocr-zone" id="ocrCanvasContainer">
+                <canvas id="handwritingCanvas" class="handwriting-canvas"></canvas>
+                <div class="ocr-controls">
+                    <button onclick="enhanceImage()" class="ocr-control-btn">
+                        <i class="fas fa-magic"></i> تحسين الجودة
+                    </button>
+                    <button onclick="cropImage()" class="ocr-control-btn">
+                        <i class="fas fa-crop"></i> اقتصاص
+                    </button>
+                    <button onclick="rotateImage()" class="ocr-control-btn">
+                        <i class="fas fa-redo"></i> تدوير
+                    </button>
+                    <button onclick="clearOCRCanvas()" class="ocr-control-btn ocr-clear-btn">
+                        <i class="fas fa-trash"></i> مسح
+                    </button>
+                </div>
+            </div>
+            
+            <!-- اختيار لغة OCR -->
+            <div class="form-group">
+                <label><i class="fas fa-language"></i> اختيار اللغة</label>
+                <div class="ocr-languages">
+                    <div class="language-btn active" onclick="selectOCRLanguage('ara')">
+                        العربية
+                    </div>
+                    <div class="language-btn" onclick="selectOCRLanguage('eng')">
+                        الإنجليزية
+                    </div>
+                    <div class="language-btn" onclick="selectOCRLanguage('ara+eng')">
+                        مختلط
+                    </div>
+                    <div class="language-btn" onclick="selectOCRLanguage('ara_numbers')">
+                        أرقام عربية
+                    </div>
+                </div>
+            </div>
+            
+            <!-- شريط التقدم -->
+            <div class="ocr-progress">
+                <div class="ocr-progress-bar" id="ocrProgressBar"></div>
+            </div>
+            
+            <!-- حالة المعالجة -->
+            <div id="ocrStatus" class="ocr-status"></div>
+            
+            <!-- بدء معالجة OCR -->
+            <button onclick="processOCR()" class="btn btn-primary" style="margin: 20px 0;">
+                <i class="fas fa-robot"></i> بدء قراءة النص
+            </button>
+            
+            <!-- نتائج OCR -->
+            <div id="ocrResults" class="ocr-results hidden">
+                <h3><i class="fas fa-list-check"></i> النتائج المقروءة:</h3>
+                <div id="ocrResultsContent"></div>
+                
+                <div class="accuracy-meter">
+                    <div class="accuracy-value" id="accuracyValue">0%</div>
+                    <div class="accuracy-label">دقة القراءة</div>
+                </div>
+                
+                <div class="text-correction-tool">
+                    <h4><i class="fas fa-edit"></i> تصحيح النص المقروء:</h4>
+                    <div class="correction-area" id="correctionArea" contenteditable="true">
+                        النص المقروء سيظهر هنا...
+                    </div>
+                    
+                    <div class="suggestions" id="suggestionsContainer">
+                        <!-- الاقتراحات ستظهر هنا -->
+                    </div>
+                    
+                    <button onclick="applyOCRCorrections()" class="btn btn-success">
+                        <i class="fas fa-check"></i> تطبيق التصحيحات
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
--- فهارس
-CREATE INDEX idx_users_username ON users(username);
-CREATE INDEX idx_users_user_type ON users(user_type);
-CREATE INDEX idx_users_is_approved ON users(is_approved);
+    <!-- ماسح OCR -->
+    <div id="ocrScanner" class="modal hidden">
+        <div class="close-modal" onclick="closeOCRScanner()">
+            <i class="fas fa-times"></i>
+        </div>
+        <div class="modal-content">
+            <h2 style="text-align: center; margin-bottom: 20px;">
+                <i class="fas fa-font"></i> مسح نص مكتوب بخط اليد
+            </h2>
+            
+            <div style="text-align: center; margin: 20px 0;">
+                <div class="arabic-font-example">
+                    <strong>اكتب بهذا الشكل:</strong><br>
+                    اسم الطالب: ________<br>
+                    رقم الطالب: ________<br>
+                    الصف: ________
+                </div>
+            </div>
+            
+            <video id="ocrVideo" autoplay style="width: 100%; border-radius: 10px;"></video>
+            <canvas id="ocrCaptureCanvas" class="hidden"></canvas>
+            
+            <div style="text-align: center; margin: 30px 0;">
+                <button onclick="captureOCRImage()" class="btn btn-success" style="width: 80px; height: 80px; border-radius: 50%;">
+                    <i class="fas fa-camera fa-2x"></i>
+                </button>
+                <p style="color: #666; margin-top: 15px;">اضغط لالتقاط صورة واضحة للنص</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // متغيرات OCR
+        let ocrStream = null;
+        let currentOCRLanguage = 'ara';
+        let ocrImageData = null;
+        let tesseractWorker = null;
+        
+        // تحسين واجهة التطبيق
+        document.addEventListener('DOMContentLoaded', function() {
+            // إضافة زر OCR إلى شريط التنقل
+            const navRow = document.querySelector('.row');
+            const ocrButton = document.createElement('button');
+            ocrButton.className = 'btn ocr-process-btn';
+            ocrButton.innerHTML = '<i class="fas fa-font"></i> قراءة خط اليد';
+            ocrButton.onclick = () => showOCRSection();
+            navRow.appendChild(ocrButton);
+        });
+        
+        function showOCRSection() {
+            // إخفاء جميع الأقسام
+            document.querySelectorAll('.card').forEach(card => {
+                card.classList.add('hidden');
+            });
+            
+            // إظهار قسم OCR
+            document.getElementById('ocrSection').classList.remove('hidden');
+        }
+        
+        // فتح ماسح OCR
+        function openOCRScanner() {
+            document.getElementById('ocrScanner').classList.remove('hidden');
+            
+            navigator.mediaDevices.getUserMedia({ 
+                video: { 
+                    facingMode: 'environment',
+                    width: { ideal: 1920 },
+                    height: { ideal: 1080 }
+                } 
+            }).then(stream => {
+                ocrStream = stream;
+                const video = document.getElementById('ocrVideo');
+                video.srcObject = stream;
+                video.play();
+            }).catch(error => {
+                showAlert('خطأ في تشغيل الكاميرا: ' + error.message, 'error');
+                closeOCRScanner();
+            });
+        }
+        
+        function closeOCRScanner() {
+            if (ocrStream) {
+                ocrStream.getTracks().forEach(track => track.stop());
+                ocrStream = null;
+            }
+            document.getElementById('ocrScanner').classList.add('hidden');
+        }
+        
+        function captureOCRImage() {
+            const video = document.getElementById('ocrVideo');
+            const canvas = document.getElementById('ocrCaptureCanvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            const imageData = canvas.toDataURL('image/jpeg', 0.9);
+            loadOCRImage(imageData);
+            closeOCRScanner();
+        }
+        
+        function handleOCRFileUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    loadOCRImage(e.target.result);
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+        
+        function loadOCRImage(imageData) {
+            ocrImageData = imageData;
+            const canvas = document.getElementById('handwritingCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            const img = new Image();
+            img.onload = function() {
+                // تحديد حجم مناسب للعرض
+                const maxWidth = 800;
+                const maxHeight = 600;
+                
+                let width = img.width;
+                let height = img.height;
+                
+                if (width > maxWidth) {
+                    height = (maxWidth / width) * height;
+                    width = maxWidth;
+                }
+                
+                if (height > maxHeight) {
+                    width = (maxHeight / height) * width;
+                    height = maxHeight;
+                }
+                
+                canvas.width = width;
+                canvas.height = height;
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                document.getElementById('ocrCanvasContainer').classList.add('active');
+                showAlert('تم تحميل الصورة بنجاح!', 'success');
+            };
+            img.src = imageData;
+        }
+        
+        function loadSampleImage(type) {
+            let sampleData = '';
+            
+            switch(type) {
+                case 'arabic1':
+                    sampleData = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICAgIDxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiNmZmZmZmYiLz4KICAgIDx0ZXh0IHg9IjUwJSIgeT0iMzAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIiBmaWxsPSIjMDAwIj4KICAgICAgIC اسم الطالب: أحمد محمد علي<br/>رقم الطالب: ١٢٣٤٥<br/>الصف: العاشر - أ
+ICAgIDwvdGV4dD4KPC9zdmc+';
+                    break;
+                case 'numbers':
+                    sampleData = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICAgIDxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiNmZmZmZmYiLz4KICAgIDx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMzYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIiBmaWxsPSIjMDAwIj4KICAgICAgICA١ ٢ ٣ ٤ ٥ ٦ ٧ ٨ ٩ ٠
+ICAgIDwvdGV4dD4KPC9zdmc+';
+                    break;
+                case 'mixed':
+                    sampleData = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICAgIDxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiNmZmZmZmYiLz4KICAgIDx0ZXh0IHg9IjUwJSIgeT0iNDAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIiBmaWxsPSIjMDAwIj4KICAgICAgIC الطالب: سارة خالد أحمد<br/>المدرسة: النموذجية<br/>الرقم: ٨٧٦٥٤<br/>التاريخ: ١٤٤٥/٠٦/٢٠
+ICAgIDwvdGV4dD4KPC9zdmc+';
+                    break;
+            }
+            
+            loadOCRImage(sampleData);
+            showAlert('تم تحميل عينة الكتابة', 'success');
+        }
+        
+        // وظائف تحسين الصورة
+        function enhanceImage() {
+            const canvas = document.getElementById('handwritingCanvas');
+            const ctx = canvas.getContext('2d');
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            
+            // تحسين التباين
+            const data = imageData.data;
+            const contrast = 1.5;
+            const brightness = 10;
+            
+            for (let i = 0; i < data.length; i += 4) {
+                // تحسين التباين
+                data[i] = contrast * (data[i] - 128) + 128 + brightness;
+                data[i + 1] = contrast * (data[i + 1] - 128) + 128 + brightness;
+                data[i + 2] = contrast * (data[i + 2] - 128) + 128 + brightness;
+                
+                // تحسين السطوع
+                data[i] = Math.min(255, Math.max(0, data[i]));
+                data[i + 1] = Math.min(255, Math.max(0, data[i + 1]));
+                data[i + 2] = Math.min(255, Math.max(0, data[i + 2]));
+            }
+            
+            ctx.putImageData(imageData, 0, 0);
+            showAlert('تم تحسين جودة الصورة', 'success');
+        }
+        
+        function cropImage() {
+            // في التطبيق الحقيقي، هنا سيتم إضافة أدوات اقتصاص تفاعلية
+            showAlert('قم بتحديد المنطقة المطلوبة بالنقر والسحب على الصورة', 'info');
+            // يمكن إضافة مكتبة مثل Cropper.js هنا
+        }
+        
+        function rotateImage() {
+            const canvas = document.getElementById('handwritingCanvas');
+            const ctx = canvas.getContext('2d');
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+            
+            tempCanvas.width = canvas.height;
+            tempCanvas.height = canvas.width;
+            
+            tempCtx.translate(tempCanvas.width / 2, tempCanvas.height / 2);
+            tempCtx.rotate(Math.PI / 2);
+            tempCtx.drawImage(canvas, -canvas.width / 2, -canvas.height / 2);
+            
+            canvas.width = tempCanvas.width;
+            canvas.height = tempCanvas.height;
+            ctx.drawImage(tempCanvas, 0, 0);
+            
+            showAlert('تم تدوير الصورة 90 درجة', 'success');
+        }
+        
+        function clearOCRCanvas() {
+            const canvas = document.getElementById('handwritingCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            document.getElementById('ocrCanvasContainer').classList.remove('active');
+            document.getElementById('ocrResults').classList.add('hidden');
+            ocrImageData = null;
+        }
+        
+        function selectOCRLanguage(lang) {
+            currentOCRLanguage = lang;
+            document.querySelectorAll('.language-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            const langNames = {
+                'ara': 'العربية',
+                'eng': 'الإنجليزية',
+                'ara+eng': 'مختلط',
+                'ara_numbers': 'أرقام عربية'
+            };
+            
+            showAlert(`تم اختيار لغة: ${langNames[lang]}`, 'success');
+        }
+        
+        // معالجة OCR باستخدام Tesseract.js
+        async function processOCR() {
+            if (!ocrImageData) {
+                showAlert('يرجى تحميل صورة أولاً', 'error');
+                return;
+            }
+            
+            const statusDiv = document.getElementById('ocrStatus');
+            const progressBar = document.getElementById('ocrProgressBar');
+            const resultsDiv = document.getElementById('ocrResults');
+            const resultsContent = document.getElementById('ocrResultsContent');
+            const correctionArea = document.getElementById('correctionArea');
+            
+            // إعادة تعيين
+            statusDiv.className = 'ocr-status ocr-status-processing';
+            statusDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري تحميل مكتبة OCR...';
+            progressBar.style.width = '0%';
+            resultsDiv.classList.add('hidden');
+            
+            try {
+                // إعداد Tesseract
+                const langMap = {
+                    'ara': 'ara',
+                    'eng': 'eng',
+                    'ara+eng': 'ara+eng',
+                    'ara_numbers': 'ara'
+                };
+                
+                const language = langMap[currentOCRLanguage];
+                
+                // إنشاء Worker جديد
+                if (tesseractWorker) {
+                    await tesseractWorker.terminate();
+                }
+                
+                tesseractWorker = await Tesseract.createWorker({
+                    logger: (m) => updateOCRProgress(m, progressBar, statusDiv)
+                });
+                
+                await tesseractWorker.loadLanguage(language);
+                await tesseractWorker.initialize(language);
+                
+                // معالجة الصورة
+                statusDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري قراءة النص من الصورة...';
+                
+                const result = await tesseractWorker.recognize(ocrImageData);
+                
+                // عرض النتائج
+                displayOCRResults(result, resultsContent, correctionArea);
+                updateAccuracyMeter(result);
+                showSuggestions(result.text);
+                
+                resultsDiv.classList.remove('hidden');
+                statusDiv.className = 'ocr-status ocr-status-success';
+                statusDiv.innerHTML = '<i class="fas fa-check-circle"></i> تمت قراءة النص بنجاح!';
+                
+            } catch (error) {
+                console.error('خطأ في OCR:', error);
+                statusDiv.className = 'ocr-status ocr-status-error';
+                statusDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> خطأ: ${error.message}`;
+                showAlert('حدث خطأ أثناء قراءة النص', 'error');
+            }
+        }
+        
+        function updateOCRProgress(message, progressBar, statusDiv) {
+            if (message.status === 'recognizing text') {
+                const progress = message.progress || 0;
+                progressBar.style.width = `${progress * 100}%`;
+                
+                if (progress < 0.3) {
+                    statusDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري تحليل الصورة...';
+                } else if (progress < 0.6) {
+                    statusDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التعرف على الأحرف...';
+                } else {
+                    statusDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري تجميع النص...';
+                }
+            }
+        }
+        
+        function displayOCRResults(result, container, correctionArea) {
+            let html = '';
+            
+            if (result.data.words && result.data.words.length > 0) {
+                result.data.words.forEach((word, index) => {
+                    const confidence = Math.round(word.confidence);
+                    let confidenceClass = 'confidence-low';
+                    
+                    if (confidence > 80) confidenceClass = 'confidence-high';
+                    else if (confidence > 60) confidenceClass = 'confidence-medium';
+                    
+                    html += `
+                        <div class="ocr-result-item">
+                            <strong>${word.text}</strong>
+                            <span class="ocr-confidence ${confidenceClass}">
+                                ${confidence}%
+                            </span>
+                            <div style="font-size: 0.9rem; color: #666; margin-top: 5px;">
+                                الموقع: (${Math.round(word.bbox.x0)}, ${Math.round(word.bbox.y0)})
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            
+            container.innerHTML = html;
+            
+            // عرض النص الكامل في منطقة التصحيح
+            const fullText = result.data.text || 'لم يتم العثور على نص';
+            correctionArea.innerHTML = fullText.replace(/\n/g, '<br>');
+            
+            // استخراج معلومات الطالب تلقائياً
+            extractStudentInfoFromOCR(fullText);
+        }
+        
+        function extractStudentInfoFromOCR(text) {
+            const patterns = {
+                name: /(?:اسم|الطالب|الاسم)[\s:]*([^\n\r\d]+)/i,
+                id: /(?:رقم|الرقم|رمز)[\s:]*([٠-٩0-9]+)/i,
+                class: /(?:صف|الصف|الفصل)[\s:]*([^\n\r]+)/i
+            };
+            
+            const extractedInfo = {};
+            
+            // البحث عن الاسم
+            const nameMatch = text.match(patterns.name);
+            if (nameMatch && nameMatch[1]) {
+                extractedInfo.name = nameMatch[1].trim();
+            }
+            
+            // البحث عن الرقم
+            const idMatch = text.match(patterns.id);
+            if (idMatch && idMatch[1]) {
+                // تحويل الأرقام العربية إلى إنجليزية إذا لزم
+                let id = idMatch[1];
+                id = id.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+                extractedInfo.id = id;
+            }
+            
+            // البحث عن الصف
+            const classMatch = text.match(patterns.class);
+            if (classMatch && classMatch[1]) {
+                extractedInfo.class = classMatch[1].trim();
+            }
+            
+            // تحديث الحقول إذا تم العثور على معلومات
+            if (extractedInfo.name) {
+                document.getElementById('studentName').value = extractedInfo.name;
+                showAlert(`تم التعرف على الاسم: ${extractedInfo.name}`, 'success');
+            }
+            
+            if (extractedInfo.id) {
+                const idDigits = extractedInfo.id.toString().split('');
+                const idInputs = document.querySelectorAll('.student-id-input');
+                idInputs.forEach((input, index) => {
+                    if (idDigits[index]) {
+                        input.value = idDigits[index];
+                    }
+                });
+                showAlert(`تم التعرف على الرقم: ${extractedInfo.id}`, 'success');
+            }
+            
+            updateStudentInfo();
+        }
+        
+        function updateAccuracyMeter(result) {
+            const accuracyValue = document.getElementById('accuracyValue');
+            let avgConfidence = 0;
+            
+            if (result.data.words && result.data.words.length > 0) {
+                const confidences = result.data.words.map(w => w.confidence);
+                avgConfidence = confidences.reduce((a, b) => a + b, 0) / confidences.length;
+            }
+            
+            const accuracy = Math.min(100, Math.max(0, Math.round(avgConfidence)));
+            accuracyValue.textContent = `${accuracy}%`;
+            
+            // تلوين حسب الدقة
+            if (accuracy > 80) {
+                accuracyValue.style.color = '#27ae60';
+            } else if (accuracy > 60) {
+                accuracyValue.style.color = '#f39c12';
+            } else {
+                accuracyValue.style.color = '#e74c3c';
+            }
+        }
+        
+        function showSuggestions(text) {
+            const suggestionsContainer = document.getElementById('suggestionsContainer');
+            suggestionsContainer.innerHTML = '';
+            
+            // تقسيم النص إلى كلمات
+            const words = text.split(/\s+/);
+            const commonMistakes = {
+                'الطالب': ['الطالب', 'الطالب', 'الطلاب'],
+                'اسم': ['اسم', 'الاسم', 'اسماء'],
+                'رقم': ['رقم', 'الرقم', 'ارقام'],
+                'صف': ['صف', 'الصف', 'صفوف']
+            };
+            
+            // إنشاء اقتراحات للكلمات الشائعة
+            Object.keys(commonMistakes).forEach(key => {
+                if (text.includes(key)) {
+                    commonMistakes[key].forEach(suggestion => {
+                        const btn = document.createElement('button');
+                        btn.className = 'suggestion-btn';
+                        btn.textContent = suggestion;
+                        btn.onclick = () => replaceInText(key, suggestion);
+                        suggestionsContainer.appendChild(btn);
+                    });
+                }
+            });
+        }
+        
+        function replaceInText(oldText, newText) {
+            const correctionArea = document.getElementById('correctionArea');
+            let currentText = correctionArea.innerHTML.replace(/<br>/g, '\n');
+            currentText = currentText.replace(oldText, newText);
+            correctionArea.innerHTML = currentText.replace(/\n/g, '<br>');
+        }
+        
+        function applyOCRCorrections() {
+            const correctionArea = document.getElementById('correctionArea');
+            const correctedText = correctionArea.innerHTML.replace(/<br>/g, '\n');
+            
+            // استخراج المعلومات من النص المصحح
+            extractStudentInfoFromOCR(correctedText);
+            
+            showAlert('تم تطبيق التصحيحات بنجاح', 'success');
+        }
+        
+        // دمج OCR مع نظام المسح الأساسي
+        function enhancedProcessImage() {
+            // معالجة الصورة باستخدام OCR أولاً
+            const canvas = document.getElementById('previewCanvas');
+            const imageData = canvas.toDataURL('image/jpeg');
+            
+            // استخدام الصورة المعالجة في OCR
+            loadOCRImage(imageData);
+            
+            // الانتقال إلى قسم OCR
+            showOCRSection();
+        }
+        
+        // تحديث وظيفة processCapturedImage
+        function processCapturedImage(imageData) {
+            showLoading(true);
+            
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.getElementById('previewCanvas');
+                const ctx = canvas.getContext('2d');
+                
+                canvas.width = Math.min(img.width, 800);
+                canvas.height = (img.height / img.width) * canvas.width;
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                
+                // عرض خيار OCR
+                showOCRPrompt();
+                
+                elements.previewContainer.classList.remove('hidden');
+                showLoading(false);
+            };
+            img.src = imageData;
+        }
+        
+        function showOCRPrompt() {
+            const promptHTML = `
+                <div class="card" style="margin-top: 20px; background: #e3f2fd; border-color: #3498db;">
+                    <h3><i class="fas fa-font"></i> اكتشاف نص مكتوب</h3>
+                    <p>يبدو أن الصورة تحتوي على نص مكتوب بخط اليد. هل تريد قراءته تلقائياً؟</p>
+                    <div class="row">
+                        <button onclick="startOCRFromPreview()" class="btn btn-success">
+                            <i class="fas fa-robot"></i> نعم، اقرأ النص
+                        </button>
+                        <button onclick="skipOCR()" class="btn btn-outline">
+                            <i class="fas fa-forward"></i> تخطي والاستمرار
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('previewContainer').insertAdjacentHTML('beforeend', promptHTML);
+        }
+        
+        function startOCRFromPreview() {
+            const canvas = document.getElementById('previewCanvas');
+            const imageData = canvas.toDataURL('image/jpeg');
+            loadOCRImage(imageData);
+            showOCRSection();
+            
+            // إزالة prompt
+            document.querySelector('.card[style*="e3f2fd"]')?.remove();
+        }
+        
+        function skipOCR() {
+            document.querySelector('.card[style*="e3f2fd"]')?.remove();
+            simulateOMRDetection();
+        }
+        
+        // وظائف مساعدة
+        function showAlert(message, type = 'success') {
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+                ${message}
+            `;
+            
+            document.querySelector('.container').insertBefore(alert, document.querySelector('.container').firstChild);
+            
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+        
+        // إضافة drag and drop لـ OCR
+        document.addEventListener('DOMContentLoaded', function() {
+            const ocrZone = document.getElementById('ocrCanvasContainer');
+            
+            ocrZone.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                ocrZone.style.backgroundColor = 'rgba(155, 89, 182, 0.2)';
+            });
+            
+            ocrZone.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                ocrZone.style.backgroundColor = '';
+            });
+            
+            ocrZone.addEventListener('drop', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                ocrZone.style.backgroundColor = '';
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleOCRFileUpload({ target: { files } });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
