@@ -3,332 +3,814 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SamieGrade - نظام تصحيح الاختبارات</title>
+    <title>نظام التصحيح الآلي المتقدم SamieGrade</title>
+    
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- SheetJS for Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
     <style>
+        /* التنسيق العام */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Cairo', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
         :root {
             --primary: #2c3e50;
             --secondary: #3498db;
             --success: #27ae60;
             --danger: #e74c3c;
             --warning: #f39c12;
-            --light: #ecf0f1;
-            --dark: #2c3e50;
+            --info: #00b894;
+            --dark: #1a1a2e;
+            --light: #f8f9fa;
             --gray: #95a5a6;
         }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
+        
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--dark) 0%, #16213e 100%);
+            color: var(--light);
             min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
             padding: 20px;
         }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
+        
+        /* Header */
         .header {
             text-align: center;
+            padding: 30px 0;
             margin-bottom: 30px;
-            padding: 20px;
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(255, 255, 255, 0.05);
             border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            border: 3px solid var(--primary);
+            border: 2px solid rgba(52, 152, 219, 0.3);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
         }
-
+        
         .logo {
-            font-size: 3rem;
-            color: var(--primary);
-            margin-bottom: 10px;
+            font-size: 4rem;
+            color: var(--secondary);
+            margin-bottom: 20px;
+            animation: float 3s ease-in-out infinite;
         }
-
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
         .header h1 {
-            color: var(--primary);
-            font-size: 2.5rem;
+            font-size: 2.8rem;
             margin-bottom: 10px;
-            font-weight: 700;
+            background: linear-gradient(45deg, var(--secondary), var(--info));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
         }
-
+        
         .header p {
+            font-size: 1.2rem;
             color: var(--gray);
-            font-size: 1.1rem;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
         }
-
+        
+        /* Progress Steps */
+        .progress-steps {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 40px 0;
+            position: relative;
+        }
+        
+        .progress-steps::before {
+            content: '';
+            position: absolute;
+            top: 25px;
+            right: 0;
+            left: 0;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.1);
+            z-index: 1;
+        }
+        
+        .progress-line {
+            position: absolute;
+            top: 25px;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--secondary), var(--info));
+            z-index: 2;
+            transition: width 0.5s ease;
+        }
+        
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 3;
+            position: relative;
+            flex: 1;
+        }
+        
+        .step-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            border: 3px solid transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+            color: var(--gray);
+        }
+        
+        .step.active .step-icon {
+            background: var(--secondary);
+            border-color: var(--info);
+            color: white;
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(52, 152, 219, 0.5);
+        }
+        
+        .step.completed .step-icon {
+            background: var(--success);
+            border-color: var(--success);
+            color: white;
+        }
+        
+        .step-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+            text-align: center;
+            margin-top: 5px;
+        }
+        
+        .step.active .step-label {
+            color: var(--secondary);
+            font-weight: 600;
+        }
+        
+        /* Main Content */
+        .main-content {
+            min-height: 500px;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Cards */
         .card {
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(255, 255, 255, 0.05);
             border-radius: 20px;
             padding: 30px;
             margin-bottom: 30px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-            border: 2px solid var(--light);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
             transition: transform 0.3s ease;
         }
-
+        
         .card:hover {
             transform: translateY(-5px);
+            border-color: rgba(52, 152, 219, 0.3);
         }
-
+        
         .card h2 {
-            color: var(--primary);
+            color: var(--secondary);
             margin-bottom: 25px;
-            padding-bottom: 15px;
-            border-bottom: 3px solid var(--secondary);
             font-size: 1.8rem;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 15px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid rgba(52, 152, 219, 0.3);
         }
-
+        
         .card h2 i {
-            color: var(--secondary);
+            color: var(--info);
         }
-
+        
+        /* Forms */
         .form-group {
             margin-bottom: 25px;
         }
-
+        
         .form-group label {
             display: block;
             margin-bottom: 10px;
-            color: var(--dark);
+            color: var(--light);
             font-weight: 600;
             font-size: 1.1rem;
         }
-
+        
         .form-control {
             width: 100%;
             padding: 15px 20px;
-            border: 2px solid #ddd;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
             border-radius: 12px;
+            color: var(--light);
             font-size: 1.1rem;
             transition: all 0.3s ease;
-            background: white;
         }
-
+        
         .form-control:focus {
-            border-color: var(--secondary);
-            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
             outline: none;
+            border-color: var(--secondary);
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
         }
-
+        
+        .form-control::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        /* Buttons */
         .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            padding: 16px 30px;
+            padding: 15px 30px;
             border: none;
             border-radius: 12px;
             font-size: 1.1rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            width: 100%;
-            margin-top: 10px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            text-decoration: none;
         }
-
+        
         .btn-primary {
             background: linear-gradient(135deg, var(--secondary) 0%, #2980b9 100%);
             color: white;
         }
-
+        
         .btn-primary:hover {
             background: linear-gradient(135deg, #2980b9 0%, var(--secondary) 100%);
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+            box-shadow: 0 5px 20px rgba(52, 152, 219, 0.4);
         }
-
+        
         .btn-success {
             background: linear-gradient(135deg, var(--success) 0%, #219653 100%);
             color: white;
         }
-
+        
         .btn-success:hover {
             background: linear-gradient(135deg, #219653 0%, var(--success) 100%);
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(39, 174, 96, 0.4);
+            box-shadow: 0 5px 20px rgba(39, 174, 96, 0.4);
         }
-
+        
         .btn-danger {
             background: linear-gradient(135deg, var(--danger) 0%, #c0392b 100%);
             color: white;
         }
-
+        
         .btn-danger:hover {
             background: linear-gradient(135deg, #c0392b 0%, var(--danger) 100%);
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.4);
+            box-shadow: 0 5px 20px rgba(231, 76, 60, 0.4);
         }
-
+        
         .btn-warning {
             background: linear-gradient(135deg, var(--warning) 0%, #e67e22 100%);
             color: white;
         }
-
+        
         .btn-warning:hover {
             background: linear-gradient(135deg, #e67e22 0%, var(--warning) 100%);
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(243, 156, 18, 0.4);
+            box-shadow: 0 5px 20px rgba(243, 156, 18, 0.4);
         }
-
-        .btn-outline {
-            background: transparent;
-            border: 2px solid var(--secondary);
-            color: var(--secondary);
-        }
-
-        .btn-outline:hover {
-            background: var(--secondary);
+        
+        .btn-info {
+            background: linear-gradient(135deg, var(--info) 0%, #0984e3 100%);
             color: white;
         }
-
-        .hidden {
-            display: none !important;
+        
+        .btn-info:hover {
+            background: linear-gradient(135deg, #0984e3 0%, var(--info) 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 184, 148, 0.4);
         }
-
-        .row {
+        
+        /* Grid */
+        .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 30px;
         }
-
-        .preview-container {
-            text-align: center;
-            margin: 30px 0;
-        }
-
-        #previewCanvas {
-            max-width: 100%;
-            height: auto;
-            border: 3px solid var(--primary);
+        
+        .grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+        .grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+        .grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+        
+        /* Camera Section */
+        .camera-section {
+            background: rgba(0, 0, 0, 0.5);
             border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            background: white;
+            padding: 20px;
+            margin-bottom: 30px;
         }
-
-        .stats {
+        
+        .camera-container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 20px;
+        }
+        
+        .camera-preview {
+            width: 100%;
+            height: 400px;
+            background: #000;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        #camera-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .camera-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+            height: 400px;
+            border: 3px dashed var(--secondary);
+            border-radius: 10px;
+            pointer-events: none;
+        }
+        
+        .camera-controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
             margin-top: 20px;
         }
-
-        .stat-box {
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
-            text-align: center;
-            border: 2px solid var(--light);
+        
+        /* Scanner Options */
+        .scanner-options {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
         }
-
-        .stat-box .number {
+        
+        .scanner-option {
+            background: rgba(52, 152, 219, 0.1);
+            border: 2px solid rgba(52, 152, 219, 0.3);
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .scanner-option:hover {
+            background: rgba(52, 152, 219, 0.2);
+            transform: translateY(-5px);
+        }
+        
+        .scanner-option i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: var(--secondary);
+        }
+        
+        .scanner-option h3 {
+            margin-bottom: 10px;
+            color: var(--light);
+        }
+        
+        .scanner-option p {
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+        
+        /* Answer Sheet Template - IMPROVED */
+        .answer-sheet-page {
+            width: 210mm;
+            min-height: 297mm;
+            background: white;
+            color: black;
+            margin: 0 auto;
+            padding: 15mm;
+            position: relative;
+            font-family: 'Cairo', 'Arial', sans-serif;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* Calibration Marks */
+        .calibration-mark {
+            position: absolute;
+            width: 8mm;
+            height: 8mm;
+            background: black;
+        }
+        
+        .top-left { top: 5mm; left: 5mm; }
+        .top-right { top: 5mm; right: 5mm; }
+        .bottom-left { bottom: 5mm; left: 5mm; }
+        .bottom-right { bottom: 5mm; right: 5mm; }
+        .top-center { top: 5mm; left: 50%; transform: translateX(-50%); }
+        .bottom-center { bottom: 5mm; left: 50%; transform: translateX(-50%); }
+        
+        /* QR Code Area */
+        .qr-code-area {
+            position: absolute;
+            top: 5mm;
+            right: 5mm;
+            width: 25mm;
+            height: 25mm;
+            border: 1mm solid black;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9pt;
+            text-align: center;
+            background: white;
+        }
+        
+        /* Header */
+        .sheet-header {
+            text-align: center;
+            margin-bottom: 10mm;
+            padding-bottom: 5mm;
+            border-bottom: 1mm solid #333;
+        }
+        
+        .sheet-title {
+            font-size: 24pt;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 3mm;
+        }
+        
+        .exam-info {
+            font-size: 14pt;
+            color: #666;
+        }
+        
+        /* Student Info Section */
+        .student-info-section {
+            background: #f8f9fa;
+            border: 0.5mm solid #ddd;
+            border-radius: 3mm;
+            padding: 5mm;
+            margin-bottom: 8mm;
+        }
+        
+        .student-info-title {
+            font-size: 16pt;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 3mm;
+            text-align: center;
+        }
+        
+        .student-fields {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 3mm;
+        }
+        
+        .field-group {
+            display: flex;
+            align-items: center;
+            gap: 2mm;
+        }
+        
+        .field-label {
+            font-size: 12pt;
+            font-weight: bold;
+            min-width: 30mm;
+        }
+        
+        .field-input {
+            flex: 1;
+            border-bottom: 0.5mm solid #333;
+            min-height: 8mm;
+            text-align: center;
+            font-size: 12pt;
+        }
+        
+        /* Instructions */
+        .instructions {
+            background: #fff8e1;
+            border: 0.5mm solid #ffd54f;
+            border-radius: 3mm;
+            padding: 4mm;
+            margin-bottom: 8mm;
+            font-size: 11pt;
+        }
+        
+        .instructions h4 {
+            color: #e65100;
+            margin-bottom: 2mm;
+            text-align: center;
+        }
+        
+        .instructions-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2mm;
+        }
+        
+        /* Questions Grid - IMPROVED */
+        .questions-container {
+            margin-bottom: 10mm;
+        }
+        
+        .questions-columns {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 5mm;
+        }
+        
+        .question-item {
+            display: flex;
+            align-items: center;
+            gap: 3mm;
+            padding: 2mm;
+            border-bottom: 0.2mm solid #eee;
+            margin-bottom: 2mm;
+        }
+        
+        .question-number {
+            font-size: 12pt;
+            font-weight: bold;
+            min-width: 15mm;
+            text-align: center;
+            background: #f0f0f0;
+            border-radius: 2mm;
+            padding: 1mm;
+        }
+        
+        .question-options {
+            display: flex;
+            gap: 3mm;
+            flex: 1;
+            justify-content: space-around;
+        }
+        
+        .option {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1mm;
+        }
+        
+        .bubble {
+            width: 5mm;
+            height: 5mm;
+            border: 0.5mm solid #333;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+        
+        .bubble:hover {
+            background: #f0f0f0;
+        }
+        
+        .option-label {
+            font-size: 10pt;
+            font-weight: bold;
+        }
+        
+        /* Matching Questions Section - NEW */
+        .matching-section {
+            border: 0.5mm solid #3498db;
+            border-radius: 3mm;
+            padding: 4mm;
+            margin-bottom: 8mm;
+            background: #f8fdff;
+        }
+        
+        .matching-title {
+            font-size: 14pt;
+            font-weight: bold;
+            color: #3498db;
+            margin-bottom: 3mm;
+            text-align: center;
+        }
+        
+        .matching-pairs {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 3mm;
+            align-items: center;
+        }
+        
+        .matching-left, .matching-right {
+            display: flex;
+            flex-direction: column;
+            gap: 3mm;
+        }
+        
+        .matching-item {
+            padding: 2mm;
+            border: 0.3mm solid #ddd;
+            border-radius: 2mm;
+            text-align: center;
+            font-size: 11pt;
+            min-height: 8mm;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+        }
+        
+        .matching-arrow {
+            text-align: center;
+            font-size: 16pt;
+            color: #3498db;
+        }
+        
+        .matching-bubbles {
+            display: flex;
+            justify-content: center;
+            gap: 2mm;
+            margin-top: 2mm;
+        }
+        
+        /* Footer */
+        .sheet-footer {
+            text-align: center;
+            margin-top: 10mm;
+            padding-top: 5mm;
+            border-top: 0.5mm solid #ddd;
+            color: #666;
+            font-size: 10pt;
+        }
+        
+        /* Results Section */
+        .results-container {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, rgba(52, 152, 219, 0.2), rgba(0, 184, 148, 0.2));
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            border: 1px solid rgba(52, 152, 219, 0.3);
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-icon {
             font-size: 2.5rem;
-            font-weight: 700;
-            color: var(--primary);
+            margin-bottom: 15px;
+            color: var(--secondary);
+        }
+        
+        .stat-value {
+            font-size: 2.8rem;
+            font-weight: bold;
+            color: var(--light);
             margin-bottom: 10px;
         }
-
-        .stat-box .label {
+        
+        .stat-label {
             color: var(--gray);
             font-size: 1rem;
         }
-
+        
         .results-table {
             width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-            background: white;
+            background: rgba(255, 255, 255, 0.05);
             border-radius: 15px;
             overflow: hidden;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin-top: 30px;
         }
-
+        
         .results-table th {
-            background: var(--primary);
+            background: linear-gradient(135deg, var(--secondary), var(--info));
             color: white;
             padding: 20px;
             text-align: right;
             font-weight: 600;
         }
-
+        
         .results-table td {
-            padding: 20px;
-            border-bottom: 1px solid #eee;
-            color: var(--dark);
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
-
+        
         .results-table tr:hover {
-            background: #f8f9fa;
+            background: rgba(255, 255, 255, 0.05);
         }
-
+        
         .grade-badge {
             padding: 8px 20px;
             border-radius: 50px;
             font-weight: 600;
             font-size: 0.9rem;
+            display: inline-block;
         }
-
+        
         .grade-excellent {
-            background: rgba(39, 174, 96, 0.1);
+            background: rgba(39, 174, 96, 0.2);
             color: var(--success);
+            border: 1px solid rgba(39, 174, 96, 0.3);
         }
-
+        
         .grade-good {
-            background: rgba(52, 152, 219, 0.1);
+            background: rgba(52, 152, 219, 0.2);
             color: var(--secondary);
+            border: 1px solid rgba(52, 152, 219, 0.3);
         }
-
+        
         .grade-average {
-            background: rgba(243, 156, 18, 0.1);
+            background: rgba(243, 156, 18, 0.2);
             color: var(--warning);
+            border: 1px solid rgba(243, 156, 18, 0.3);
         }
-
+        
         .grade-poor {
-            background: rgba(231, 76, 60, 0.1);
+            background: rgba(231, 76, 60, 0.2);
             color: var(--danger);
+            border: 1px solid rgba(231, 76, 60, 0.3);
         }
-
-        .upload-area {
-            border: 3px dashed var(--secondary);
-            border-radius: 20px;
-            padding: 60px 30px;
+        
+        /* Export Options */
+        .export-options {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .export-option {
+            background: rgba(52, 152, 219, 0.1);
+            border: 2px solid rgba(52, 152, 219, 0.3);
+            border-radius: 15px;
+            padding: 25px;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s ease;
-            background: rgba(52, 152, 219, 0.05);
         }
-
-        .upload-area:hover {
-            background: rgba(52, 152, 219, 0.1);
-            border-color: var(--primary);
+        
+        .export-option:hover {
+            background: rgba(52, 152, 219, 0.2);
+            transform: translateY(-5px);
         }
-
-        .upload-area i {
-            font-size: 4rem;
+        
+        .export-option i {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
             color: var(--secondary);
-            margin-bottom: 20px;
         }
-
-        .upload-area p {
-            color: var(--dark);
-            font-size: 1.2rem;
+        
+        .export-option h4 {
+            color: var(--light);
             margin-bottom: 10px;
         }
-
-        .upload-area span {
+        
+        .export-option p {
             color: var(--gray);
             font-size: 0.9rem;
         }
-
+        
+        /* Modals */
         .modal {
             position: fixed;
             top: 0;
@@ -336,23 +818,29 @@
             width: 100%;
             height: 100%;
             background: rgba(0, 0, 0, 0.8);
-            display: flex;
+            display: none;
             align-items: center;
             justify-content: center;
             z-index: 1000;
-            backdrop-filter: blur(5px);
+            backdrop-filter: blur(10px);
         }
-
+        
+        .modal.active {
+            display: flex;
+        }
+        
         .modal-content {
-            background: white;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
             border-radius: 25px;
             padding: 40px;
-            max-width: 600px;
+            max-width: 800px;
             width: 90%;
             max-height: 90vh;
             overflow-y: auto;
+            border: 2px solid rgba(52, 152, 219, 0.3);
+            position: relative;
         }
-
+        
         .close-modal {
             position: absolute;
             top: 20px;
@@ -360,86 +848,189 @@
             font-size: 2rem;
             color: white;
             cursor: pointer;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(231, 76, 60, 0.3);
             width: 50px;
             height: 50px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: all 0.3s ease;
+            z-index: 1001;
         }
-
-        .alert {
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            font-weight: 500;
+        
+        .close-modal:hover {
+            background: var(--danger);
+            transform: rotate(90deg);
         }
-
-        .alert-success {
-            background: rgba(39, 174, 96, 0.1);
-            border: 2px solid var(--success);
-            color: var(--success);
-        }
-
-        .alert-error {
-            background: rgba(231, 76, 60, 0.1);
-            border: 2px solid var(--danger);
-            color: var(--danger);
-        }
-
+        
+        /* Loading */
         .loading {
             display: inline-block;
-            width: 50px;
-            height: 50px;
-            border: 5px solid #f3f3f3;
+            width: 60px;
+            height: 60px;
+            border: 5px solid rgba(255, 255, 255, 0.1);
             border-top: 5px solid var(--secondary);
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
-
+        
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-
-        @media (max-width: 768px) {
-            .row {
+        
+        /* Utility Classes */
+        .hidden {
+            display: none !important;
+        }
+        
+        .text-center {
+            text-align: center;
+        }
+        
+        .mt-20 {
+            margin-top: 20px;
+        }
+        
+        .mt-30 {
+            margin-top: 30px;
+        }
+        
+        .mb-20 {
+            margin-bottom: 20px;
+        }
+        
+        .mb-30 {
+            margin-bottom: 30px;
+        }
+        
+        .w-full {
+            width: 100%;
+        }
+        
+        .flex {
+            display: flex;
+        }
+        
+        .items-center {
+            align-items: center;
+        }
+        
+        .justify-center {
+            justify-content: center;
+        }
+        
+        .justify-between {
+            justify-content: space-between;
+        }
+        
+        .gap-10 {
+            gap: 10px;
+        }
+        
+        .gap-20 {
+            gap: 20px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .grid-cols-4,
+            .scanner-options,
+            .export-options {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .camera-container {
                 grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
             }
             
             .header h1 {
                 font-size: 2rem;
             }
             
+            .progress-steps {
+                flex-wrap: wrap;
+                gap: 20px;
+            }
+            
+            .step {
+                flex: 0 0 calc(33.333% - 20px);
+            }
+            
+            .grid-cols-2,
+            .grid-cols-3,
+            .grid-cols-4,
+            .scanner-options,
+            .export-options {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
             .card {
                 padding: 20px;
             }
+            
+            .student-fields {
+                grid-template-columns: 1fr;
+            }
+            
+            .questions-columns {
+                grid-template-columns: 1fr;
+            }
+            
+            .matching-pairs {
+                grid-template-columns: 1fr;
+            }
+            
+            .camera-controls {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+            }
         }
-
-        .camera-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: black;
-            z-index: 999;
-        }
-
-        .camera-controls {
-            position: fixed;
-            bottom: 30px;
-            left: 0;
-            width: 100%;
-            text-align: center;
-            z-index: 1000;
-        }
-
-        .camera-video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
+        
+        @media print {
+            body {
+                background: white !important;
+                color: black !important;
+            }
+            
+            .container {
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            
+            .header, .progress-steps, .footer, .btn, .modal {
+                display: none !important;
+            }
+            
+            .main-content {
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            
+            .answer-sheet-page {
+                box-shadow: none !important;
+                margin: 0 !important;
+                padding: 15mm !important;
+                page-break-after: always;
+            }
         }
     </style>
 </head>
@@ -450,951 +1041,1718 @@
             <div class="logo">
                 <i class="fas fa-graduation-cap"></i>
             </div>
-            <h1>SamieGrade</h1>
-            <p>نظام تصحيح الاختبارات الذكي باستخدام الذكاء الاصطناعي</p>
+            <h1>نظام التصحيح الآلي المتقدم SamieGrade</h1>
+            <p>نظام متكامل للتصحيح الآلي باستخدام الذكاء الاصطناعي ومعالجة الصور المتقدمة</p>
         </div>
 
-        <!-- Login Section -->
-        <div id="loginSection" class="card">
-            <h2><i class="fas fa-sign-in-alt"></i> تسجيل الدخول</h2>
-            <div class="form-group">
-                <label><i class="fas fa-envelope"></i> البريد الإلكتروني</label>
-                <input type="email" id="email" class="form-control" placeholder="أدخل بريدك الإلكتروني">
+        <!-- Progress Steps -->
+        <div id="progressBar" class="progress-steps">
+            <div class="progress-line"></div>
+            <div class="step active" data-step="1">
+                <div class="step-icon">1</div>
+                <div class="step-label">تسجيل الدخول</div>
             </div>
-            <div class="form-group">
-                <label><i class="fas fa-lock"></i> كلمة المرور</label>
-                <input type="password" id="password" class="form-control" placeholder="أدخل كلمة المرور">
+            <div class="step" data-step="2">
+                <div class="step-icon">2</div>
+                <div class="step-label">إنشاء اختبار</div>
             </div>
-            <button id="loginBtn" class="btn btn-primary">
-                <i class="fas fa-sign-in-alt"></i> تسجيل الدخول
-            </button>
-            <button id="registerBtn" class="btn btn-outline">
-                <i class="fas fa-user-plus"></i> إنشاء حساب جديد
-            </button>
+            <div class="step" data-step="3">
+                <div class="step-icon">3</div>
+                <div class="step-label">تصميم الورقة</div>
+            </div>
+            <div class="step" data-step="4">
+                <div class="step-icon">4</div>
+                <div class="step-label">مسح الأوراق</div>
+            </div>
+            <div class="step" data-step="5">
+                <div class="step-icon">5</div>
+                <div class="step-label">النتائج</div>
+            </div>
         </div>
 
-        <!-- Main App Section -->
-        <div id="appSection" class="hidden">
-            <!-- Navigation -->
-            <div class="card">
-                <div class="row">
-                    <button id="setupTestBtn" class="btn btn-primary">
-                        <i class="fas fa-cog"></i> إعداد الاختبار
-                    </button>
-                    <button id="scanBtn" class="btn btn-success">
-                        <i class="fas fa-camera"></i> مسح الإجابات
-                    </button>
-                    <button id="resultsBtn" class="btn btn-warning">
-                        <i class="fas fa-chart-bar"></i> النتائج
-                    </button>
-                    <button id="logoutBtn" class="btn btn-danger">
-                        <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
-                    </button>
-                </div>
-            </div>
-
-            <!-- Test Setup -->
-            <div id="testSetup" class="card">
-                <h2><i class="fas fa-cog"></i> إعداد الاختبار</h2>
-                <div class="form-group">
-                    <label><i class="fas fa-file-alt"></i> اسم الاختبار</label>
-                    <input type="text" id="testName" class="form-control" placeholder="أدخل اسم الاختبار">
-                </div>
-                
-                <div class="form-group">
-                    <label><i class="fas fa-question-circle"></i> عدد الأسئلة (حتى 80 سؤال)</label>
-                    <input type="number" id="totalQuestions" class="form-control" min="1" max="80" value="40" placeholder="أدخل عدد الأسئلة">
-                </div>
-                
-                <div class="form-group">
-                    <label><i class="fas fa-key"></i> الإجابات النموذجية</label>
-                    <textarea id="correctAnswers" class="form-control" rows="4" placeholder="أدخل الإجابات النموذجية (مثال: A,B,C,D,A,B,...)"></textarea>
-                    <small style="color: var(--gray); margin-top: 5px; display: block;">
-                        أدخل الإجابات مفصولة بفواصل (A,B,C,D)
-                    </small>
-                </div>
-                
-                <div class="form-group">
-                    <label><i class="fas fa-print"></i> نموذج ورقة الإجابة</label>
-                    <div class="upload-area" onclick="generateAnswerSheet()">
-                        <i class="fas fa-download"></i>
-                        <p>انقر لتحميل نموذج ورقة الإجابة</p>
-                        <span>سيتم إنشاء نموذج يتسع لـ <span id="sheetCapacity">80</span> سؤال</span>
-                    </div>
-                </div>
-                
-                <button id="saveTestBtn" class="btn btn-success">
-                    <i class="fas fa-save"></i> حفظ الإعدادات
-                </button>
-            </div>
-
-            <!-- Scan Section -->
-            <div id="scanSection" class="card hidden">
-                <h2><i class="fas fa-camera"></i> مسح إجابات الطلاب</h2>
-                
-                <div class="form-group">
-                    <label><i class="fas fa-user-graduate"></i> اسم الطالب</label>
-                    <input type="text" id="studentName" class="form-control" placeholder="أدخل اسم الطالب">
-                </div>
-                
-                <div class="upload-area" onclick="openCamera()">
-                    <i class="fas fa-camera"></i>
-                    <p>التقاط صورة بواسطة الكاميرا</p>
-                    <span>أو قم بسحب وإفلات الصورة هنا</span>
-                </div>
-                
-                <div class="upload-area" onclick="document.getElementById('fileInput').click()">
-                    <i class="fas fa-scanner"></i>
-                    <p>رفع صورة من الماسح الضوئي</p>
-                    <span>JPG, PNG, PDF - حتى 10MB</span>
-                </div>
-                
-                <input type="file" id="fileInput" accept="image/*,.pdf" class="hidden">
-                
-                <div class="preview-container hidden" id="previewContainer">
-                    <canvas id="previewCanvas"></canvas>
-                    <button onclick="processImage()" class="btn btn-success" style="margin-top: 20px;">
-                        <i class="fas fa-play"></i> بدء التصحيح
-                    </button>
-                </div>
-            </div>
-
-            <!-- Results Section -->
-            <div id="resultsSection" class="card hidden">
-                <h2><i class="fas fa-chart-bar"></i> نتائج الطلاب</h2>
-                
-                <div class="stats">
-                    <div class="stat-box">
-                        <div class="number" id="totalStudents">0</div>
-                        <div class="label">عدد الطلاب</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="number" id="averageScore">0%</div>
-                        <div class="label">متوسط الدرجات</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="number" id="highestScore">0%</div>
-                        <div class="label">أعلى درجة</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="number" id="lowestScore">0%</div>
-                        <div class="label">أقل درجة</div>
-                    </div>
-                </div>
-                
-                <div class="form-group" style="margin-top: 30px;">
-                    <button onclick="exportToExcel()" class="btn btn-success">
-                        <i class="fas fa-file-excel"></i> تصدير إلى Excel
-                    </button>
-                    <button onclick="printResults()" class="btn btn-primary">
-                        <i class="fas fa-print"></i> طباعة النتائج
-                    </button>
-                </div>
-                
-                <div id="resultsContainer">
-                    <!-- Results will be loaded here -->
-                </div>
-            </div>
-
-            <!-- Current Results Display -->
-            <div id="currentResult" class="card hidden">
-                <h2><i class="fas fa-star"></i> نتيجة التصحيح</h2>
-                <div id="resultDetails"></div>
-            </div>
+        <!-- Main Content -->
+        <div id="mainContent" class="main-content">
+            <!-- سيتم تحميل المحتوى الديناميكي هنا -->
         </div>
     </div>
 
-    <!-- Camera Modal -->
-    <div id="cameraModal" class="modal hidden">
-        <div class="close-modal" onclick="closeCamera()">
-            <i class="fas fa-times"></i>
-        </div>
-        <div class="modal-content">
-            <h2 style="text-align: center; margin-bottom: 20px;">
-                <i class="fas fa-camera"></i> التقاط صورة
-            </h2>
-            <div class="camera-overlay">
-                <video id="cameraVideo" class="camera-video" autoplay></video>
-                <canvas id="cameraCanvas" class="hidden"></canvas>
-            </div>
-            <div class="camera-controls">
-                <button onclick="capturePhoto()" class="btn btn-success" style="width: 70px; height: 70px; border-radius: 50%; margin: 0 20px;">
-                    <i class="fas fa-camera fa-2x"></i>
-                </button>
-                <button onclick="toggleFlash()" class="btn btn-warning" style="width: auto; padding: 10px 20px; border-radius: 25px;">
-                    <i class="fas fa-bolt"></i> فلاش
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Loading Modal -->
-    <div id="loadingModal" class="modal hidden">
+    <!-- Modals -->
+    <div id="loadingModal" class="modal">
         <div class="modal-content" style="text-align: center; padding: 60px;">
             <div class="loading" style="margin: 0 auto 30px;"></div>
-            <h3 style="color: var(--primary);">جاري معالجة الصورة...</h3>
-            <p style="color: var(--gray); margin-top: 10px;">يرجى الانتظار</p>
+            <h3 style="color: var(--secondary);">جاري المعالجة...</h3>
+            <p style="color: var(--gray); margin-top: 10px;" id="loadingMessage">يرجى الانتظار</p>
+        </div>
+    </div>
+
+    <div id="resultModal" class="modal">
+        <div class="modal-content">
+            <div class="close-modal" onclick="closeModal('resultModal')">
+                <i class="fas fa-times"></i>
+            </div>
+            <div id="resultModalContent"></div>
         </div>
     </div>
 
     <script>
-        // Firebase Configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyBseqoPupcfWP_ShLCtXRwUWYIj_FMwPgY",
-            authDomain: "sameigrader.firebaseapp.com",
-            projectId: "sameigrader",
-            storageBucket: "sameigrader.firebasestorage.app",
-            messagingSenderId: "191636766460",
-            appId: "1:191636766460:web:fa05aea47d58410674a179"
-        };
-
-        // DOM Elements
-        const elements = {
-            // Login Section
-            loginSection: document.getElementById('loginSection'),
-            appSection: document.getElementById('appSection'),
-            email: document.getElementById('email'),
-            password: document.getElementById('password'),
-            loginBtn: document.getElementById('loginBtn'),
-            registerBtn: document.getElementById('registerBtn'),
-            logoutBtn: document.getElementById('logoutBtn'),
+        // نظام SamieGrade المتقدم
+        class SamieGradeSystem {
+            constructor() {
+                this.currentUser = null;
+                this.currentExam = null;
+                this.currentStep = 1;
+                this.cameraStream = null;
+                this.answerKey = {};
+                this.results = [];
+                this.exams = [];
+                this.sheetDesign = {
+                    template: 'standard',
+                    header: true,
+                    instructions: true,
+                    studentInfo: true,
+                    columns: 2,
+                    bubbleSize: 5,
+                    qrCode: true,
+                    calibrationMarks: true,
+                    includeMatching: false,
+                    matchingCount: 5
+                };
+                
+                this.init();
+            }
             
-            // App Sections
-            testSetup: document.getElementById('testSetup'),
-            scanSection: document.getElementById('scanSection'),
-            resultsSection: document.getElementById('resultsSection'),
+            init() {
+                this.loadFromLocalStorage();
+                this.renderProgressBar();
+                this.renderMainContent();
+                this.setupEventListeners();
+                console.log('نظام SamieGrade تم تهيئته بنجاح!');
+            }
             
-            // Test Setup
-            testName: document.getElementById('testName'),
-            totalQuestions: document.getElementById('totalQuestions'),
-            correctAnswers: document.getElementById('correctAnswers'),
-            saveTestBtn: document.getElementById('saveTestBtn'),
-            
-            // Scan Section
-            studentName: document.getElementById('studentName'),
-            fileInput: document.getElementById('fileInput'),
-            previewCanvas: document.getElementById('previewCanvas'),
-            previewContainer: document.getElementById('previewContainer'),
-            
-            // Results Section
-            resultsContainer: document.getElementById('resultsContainer'),
-            totalStudents: document.getElementById('totalStudents'),
-            averageScore: document.getElementById('averageScore'),
-            highestScore: document.getElementById('highestScore'),
-            lowestScore: document.getElementById('lowestScore'),
-            
-            // Current Result
-            currentResult: document.getElementById('currentResult'),
-            resultDetails: document.getElementById('resultDetails'),
-            
-            // Buttons
-            setupTestBtn: document.getElementById('setupTestBtn'),
-            scanBtn: document.getElementById('scanBtn'),
-            resultsBtn: document.getElementById('resultsBtn'),
-            
-            // Camera
-            cameraModal: document.getElementById('cameraModal'),
-            cameraVideo: document.getElementById('cameraVideo'),
-            cameraCanvas: document.getElementById('cameraCanvas'),
-            
-            // Loading
-            loadingModal: document.getElementById('loadingModal')
-        };
-
-        // Application State
-        const state = {
-            currentUser: null,
-            testConfig: {
-                name: '',
-                totalQuestions: 40,
-                correctAnswers: [],
-                answerSheetUrl: ''
-            },
-            currentScan: null,
-            results: []
-        };
-
-        // Initialize Firebase (placeholder - you need to add Firebase SDK)
-        function initializeFirebase() {
-            console.log('Firebase would be initialized here');
-            // In production, uncomment this:
-            /*
-            firebase.initializeApp(firebaseConfig);
-            const auth = firebase.auth();
-            const db = firebase.firestore();
-            */
-        }
-
-        // Event Listeners
-        function setupEventListeners() {
-            // Login/Register
-            elements.loginBtn.addEventListener('click', handleLogin);
-            elements.registerBtn.addEventListener('click', handleRegister);
-            elements.logoutBtn.addEventListener('click', handleLogout);
-            
-            // Navigation
-            elements.setupTestBtn.addEventListener('click', () => showSection('testSetup'));
-            elements.scanBtn.addEventListener('click', () => showSection('scanSection'));
-            elements.resultsBtn.addEventListener('click', () => {
-                showSection('resultsSection');
-                loadResults();
-            });
-            
-            // Test Setup
-            elements.totalQuestions.addEventListener('input', updateAnswerSheetCapacity);
-            elements.saveTestBtn.addEventListener('click', saveTestConfig);
-            
-            // File Input
-            elements.fileInput.addEventListener('change', handleFileUpload);
-            
-            // Scan Buttons
-            document.querySelectorAll('.upload-area').forEach(area => {
-                if (!area.onclick) {
-                    area.addEventListener('click', function() {
-                        if (this.querySelector('.fa-camera')) {
-                            openCamera();
-                        } else if (this.querySelector('.fa-scanner')) {
-                            elements.fileInput.click();
-                        } else if (this.querySelector('.fa-download')) {
-                            generateAnswerSheet();
+            // تخزين محلي
+            loadFromLocalStorage() {
+                try {
+                    const data = localStorage.getItem('samiegrade_data');
+                    if (data) {
+                        const parsed = JSON.parse(data);
+                        this.currentUser = parsed.currentUser || null;
+                        this.exams = parsed.exams || [];
+                        this.results = parsed.results || [];
+                        this.currentExam = parsed.currentExam || null;
+                        this.sheetDesign = parsed.sheetDesign || this.sheetDesign;
+                        
+                        if (this.currentUser) {
+                            this.currentStep = 2;
                         }
-                    });
+                    }
+                } catch (error) {
+                    console.error('خطأ في تحميل البيانات:', error);
                 }
-            });
-            
-            // Drag and Drop
-            document.addEventListener('dragover', handleDragOver);
-            document.addEventListener('drop', handleDrop);
-        }
-
-        // Authentication Handlers
-        function handleLogin() {
-            const email = elements.email.value;
-            const password = elements.password.value;
-            
-            if (!email || !password) {
-                showAlert('يرجى ملء جميع الحقول', 'error');
-                return;
             }
             
-            // Simulate login (replace with Firebase auth)
-            showAlert('تم تسجيل الدخول بنجاح!', 'success');
-            state.currentUser = { email, name: 'المعلم' };
-            showApp();
-        }
-
-        function handleRegister() {
-            const email = elements.email.value;
-            const password = elements.password.value;
-            
-            if (!email || !password) {
-                showAlert('يرجى ملء جميع الحقول', 'error');
-                return;
+            saveToLocalStorage() {
+                try {
+                    const data = {
+                        currentUser: this.currentUser,
+                        exams: this.exams,
+                        results: this.results,
+                        currentExam: this.currentExam,
+                        sheetDesign: this.sheetDesign
+                    };
+                    localStorage.setItem('samiegrade_data', JSON.stringify(data));
+                } catch (error) {
+                    console.error('خطأ في حفظ البيانات:', error);
+                }
             }
             
-            if (password.length < 6) {
-                showAlert('كلمة المرور يجب أن تكون 6 أحرف على الأقل', 'error');
-                return;
+            // عرض المحتوى الرئيسي
+            renderMainContent() {
+                const mainContent = document.getElementById('mainContent');
+                
+                switch(this.currentStep) {
+                    case 1:
+                        this.renderLogin();
+                        break;
+                    case 2:
+                        this.renderCreateExam();
+                        break;
+                    case 3:
+                        this.renderDesignSheet();
+                        break;
+                    case 4:
+                        this.renderScanPapers();
+                        break;
+                    case 5:
+                        this.renderResults();
+                        break;
+                    default:
+                        this.renderLogin();
+                }
             }
             
-            showAlert('تم إنشاء الحساب بنجاح! يمكنك الآن تسجيل الدخول', 'success');
-        }
-
-        function handleLogout() {
-            state.currentUser = null;
-            showLogin();
-            showAlert('تم تسجيل الخروج', 'success');
-        }
-
-        // Section Navigation
-        function showSection(sectionId) {
-            // Hide all sections
-            elements.testSetup.classList.add('hidden');
-            elements.scanSection.classList.add('hidden');
-            elements.resultsSection.classList.add('hidden');
-            elements.currentResult.classList.add('hidden');
-            
-            // Show selected section
-            if (sectionId === 'testSetup') {
-                elements.testSetup.classList.remove('hidden');
-            } else if (sectionId === 'scanSection') {
-                elements.scanSection.classList.remove('hidden');
-                elements.currentResult.classList.add('hidden');
-            } else if (sectionId === 'resultsSection') {
-                elements.resultsSection.classList.remove('hidden');
-            }
-        }
-
-        function showLogin() {
-            elements.loginSection.classList.remove('hidden');
-            elements.appSection.classList.add('hidden');
-        }
-
-        function showApp() {
-            elements.loginSection.classList.add('hidden');
-            elements.appSection.classList.remove('hidden');
-            showSection('testSetup');
-        }
-
-        // Test Configuration
-        function updateAnswerSheetCapacity() {
-            const capacity = Math.min(80, parseInt(elements.totalQuestions.value) || 40);
-            document.getElementById('sheetCapacity').textContent = capacity;
-        }
-
-        function saveTestConfig() {
-            const testName = elements.testName.value;
-            const totalQuestions = parseInt(elements.totalQuestions.value) || 40;
-            const answers = elements.correctAnswers.value.split(',').map(a => a.trim());
-            
-            if (!testName) {
-                showAlert('يرجى إدخال اسم الاختبار', 'error');
-                return;
+            renderProgressBar() {
+                const progressBar = document.getElementById('progressBar');
+                const steps = progressBar.querySelectorAll('.step');
+                const progressLine = progressBar.querySelector('.progress-line');
+                
+                steps.forEach(step => {
+                    const stepNum = parseInt(step.dataset.step);
+                    step.classList.remove('active', 'completed');
+                    
+                    if (stepNum < this.currentStep) {
+                        step.classList.add('completed');
+                    } else if (stepNum === this.currentStep) {
+                        step.classList.add('active');
+                    }
+                });
+                
+                const progressPercentage = ((this.currentStep - 1) / (steps.length - 1)) * 100;
+                progressLine.style.width = `${progressPercentage}%`;
             }
             
-            if (totalQuestions > 80) {
-                showAlert('الحد الأقصى لعدد الأسئلة هو 80', 'error');
-                return;
-            }
-            
-            if (answers.length !== totalQuestions) {
-                showAlert(`عدد الإجابات (${answers.length}) لا يتطابق مع عدد الأسئلة (${totalQuestions})`, 'error');
-                return;
-            }
-            
-            state.testConfig = {
-                name: testName,
-                totalQuestions: totalQuestions,
-                correctAnswers: answers,
-                answerSheetUrl: `https://api.samiegrade.com/sheet?q=${totalQuestions}`
-            };
-            
-            showAlert('تم حفظ إعدادات الاختبار بنجاح!', 'success');
-        }
-
-        // Answer Sheet Generation
-        function generateAnswerSheet() {
-            const totalQuestions = parseInt(elements.totalQuestions.value) || 40;
-            const questions = Math.min(totalQuestions, 80);
-            
-            // Create PDF with answer sheet template
-            const answerSheetHTML = `
-                <!DOCTYPE html>
-                <html dir="rtl">
-                <head>
-                    <style>
-                        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
-                        .sheet { max-width: 800px; margin: 0 auto; border: 2px solid #000; padding: 20px; }
-                        .header { text-align: center; margin-bottom: 30px; }
-                        .questions-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
-                        .question-item { text-align: center; }
-                        .question-number { font-weight: bold; margin-bottom: 5px; }
-                        .options { display: flex; justify-content: center; gap: 15px; }
-                        .option { width: 20px; height: 20px; border: 1px solid #000; border-radius: 50%; }
-                        @media print { .no-print { display: none; } }
-                    </style>
-                </head>
-                <body>
-                    <div class="sheet">
-                        <div class="header">
-                            <h1>ورقة إجابة - SamieGrade</h1>
-                            <p>اسم الطالب: _________________ التاريخ: __________</p>
-                            <p>عدد الأسئلة: ${questions}</p>
+            // تسجيل الدخول
+            renderLogin() {
+                const mainContent = document.getElementById('mainContent');
+                mainContent.innerHTML = `
+                    <div class="grid grid-cols-2 gap-30">
+                        <div class="card">
+                            <h2><i class="fas fa-sign-in-alt"></i> تسجيل الدخول</h2>
+                            
+                            <div class="form-group">
+                                <label><i class="fas fa-envelope"></i> البريد الإلكتروني</label>
+                                <input type="email" id="loginEmail" class="form-control" placeholder="example@school.com">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label><i class="fas fa-lock"></i> كلمة المرور</label>
+                                <input type="password" id="loginPassword" class="form-control" placeholder="******">
+                            </div>
+                            
+                            <button onclick="app.handleLogin()" class="btn btn-primary w-full mt-20">
+                                <i class="fas fa-sign-in-alt"></i> تسجيل الدخول
+                            </button>
                         </div>
-                        <div class="questions-grid">
-                            ${Array.from({length: questions}, (_, i) => `
-                                <div class="question-item">
-                                    <div class="question-number">${i + 1}</div>
-                                    <div class="options">
-                                        <div class="option" data-answer="A">A</div>
-                                        <div class="option" data-answer="B">B</div>
-                                        <div class="option" data-answer="C">C</div>
-                                        <div class="option" data-answer="D">D</div>
+                        
+                        <div class="card">
+                            <h2><i class="fas fa-user-plus"></i> إنشاء حساب جديد</h2>
+                            
+                            <div class="form-group">
+                                <label><i class="fas fa-user"></i> الاسم الكامل</label>
+                                <input type="text" id="registerName" class="form-control" placeholder="أدخل اسمك الكامل">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label><i class="fas fa-envelope"></i> البريد الإلكتروني</label>
+                                <input type="email" id="registerEmail" class="form-control" placeholder="example@school.com">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label><i class="fas fa-lock"></i> كلمة المرور</label>
+                                <input type="password" id="registerPassword" class="form-control" placeholder="6 أحرف على الأقل">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label><i class="fas fa-school"></i> المؤسسة التعليمية</label>
+                                <input type="text" id="registerSchool" class="form-control" placeholder="اسم المدرسة أو المؤسسة">
+                            </div>
+                            
+                            <button onclick="app.handleRegister()" class="btn btn-success w-full mt-20">
+                                <i class="fas fa-user-plus"></i> إنشاء حساب
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="card mt-30">
+                        <h3><i class="fas fa-star"></i> مميزات النظام</h3>
+                        <div class="grid grid-cols-4 gap-20 mt-20">
+                            <div class="text-center">
+                                <i class="fas fa-camera fa-2x" style="color: var(--secondary);"></i>
+                                <p>مسح بالكاميرا والماسح</p>
+                            </div>
+                            <div class="text-center">
+                                <i class="fas fa-file-alt fa-2x" style="color: var(--success);"></i>
+                                <p>تصميم أوراق إجابة احترافية</p>
+                            </div>
+                            <div class="text-center">
+                                <i class="fas fa-chart-bar fa-2x" style="color: var(--warning);"></i>
+                                <p>إحصائيات وتقارير متقدمة</p>
+                            </div>
+                            <div class="text-center">
+                                <i class="fas fa-file-excel fa-2x" style="color: var(--info);"></i>
+                                <p>تصدير إلى Excel وPDF</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            handleLogin() {
+                const email = document.getElementById('loginEmail')?.value;
+                const password = document.getElementById('loginPassword')?.value;
+                
+                if (!email || !password) {
+                    this.showMessage('يرجى إدخال البريد الإلكتروني وكلمة المرور', 'error');
+                    return;
+                }
+                
+                // محاكاة تسجيل الدخول
+                this.currentUser = {
+                    name: 'المعلم ' + email.split('@')[0],
+                    email: email,
+                    school: 'مدرسة النموذج',
+                    id: Date.now()
+                };
+                
+                this.currentStep = 2;
+                this.saveToLocalStorage();
+                this.showMessage('تم تسجيل الدخول بنجاح!', 'success');
+                this.renderProgressBar();
+                this.renderMainContent();
+            }
+            
+            handleRegister() {
+                const name = document.getElementById('registerName')?.value;
+                const email = document.getElementById('registerEmail')?.value;
+                const password = document.getElementById('registerPassword')?.value;
+                const school = document.getElementById('registerSchool')?.value;
+                
+                if (!name || !email || !password || !school) {
+                    this.showMessage('يرجى ملء جميع الحقول', 'error');
+                    return;
+                }
+                
+                if (password.length < 6) {
+                    this.showMessage('كلمة المرور يجب أن تكون 6 أحرف على الأقل', 'error');
+                    return;
+                }
+                
+                this.currentUser = {
+                    name: name,
+                    email: email,
+                    school: school,
+                    id: Date.now()
+                };
+                
+                this.currentStep = 2;
+                this.saveToLocalStorage();
+                this.showMessage('تم إنشاء الحساب بنجاح!', 'success');
+                this.renderProgressBar();
+                this.renderMainContent();
+            }
+            
+            handleLogout() {
+                this.currentUser = null;
+                this.currentStep = 1;
+                this.saveToLocalStorage();
+                this.showMessage('تم تسجيل الخروج', 'success');
+                this.renderProgressBar();
+                this.renderMainContent();
+            }
+            
+            // إنشاء اختبار
+            renderCreateExam() {
+                const mainContent = document.getElementById('mainContent');
+                mainContent.innerHTML = `
+                    <div class="grid grid-cols-2 gap-30">
+                        <div class="card">
+                            <h2><i class="fas fa-file-alt"></i> تفاصيل الاختبار</h2>
+                            
+                            <div class="form-group">
+                                <label><i class="fas fa-heading"></i> عنوان الاختبار</label>
+                                <input type="text" id="examTitle" class="form-control" value="اختبار ${new Date().toLocaleDateString('ar-SA')}" placeholder="اسم الاختبار">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label><i class="fas fa-book"></i> المادة</label>
+                                <input type="text" id="examSubject" class="form-control" value="رياضيات" placeholder="اسم المادة">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label><i class="fas fa-question-circle"></i> عدد الأسئلة</label>
+                                <input type="number" id="totalQuestions" class="form-control" min="1" max="100" value="25">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label><i class="fas fa-tasks"></i> نوع الأسئلة</label>
+                                <select id="questionType" class="form-control">
+                                    <option value="mc">اختيار من متعدد</option>
+                                    <option value="tf">صح/خطأ</option>
+                                    <option value="matching">مطابقة</option>
+                                    <option value="mixed">مختلط</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label><i class="fas fa-calendar"></i> تاريخ الاختبار</label>
+                                <input type="date" id="examDate" class="form-control" value="${new Date().toISOString().split('T')[0]}">
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <h2><i class="fas fa-key"></i> نموذج الإجابة الصحيحة</h2>
+                            <div id="answerKeyContainer" style="max-height: 400px; overflow-y: auto; margin-bottom: 20px;"></div>
+                            
+                            <div class="flex gap-10 mt-20">
+                                <button onclick="app.generateAnswerKeyForm()" class="btn btn-info flex-1">
+                                    <i class="fas fa-sync"></i> إنشاء نموذج
+                                </button>
+                                <button onclick="app.saveExam()" class="btn btn-success flex-1">
+                                    <i class="fas fa-save"></i> حفظ الاختبار
+                                </button>
+                            </div>
+                            
+                            <button onclick="app.nextToDesign()" class="btn btn-primary w-full mt-10">
+                                <i class="fas fa-arrow-right"></i> التالي: تصميم ورقة الإجابة
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                // إضافة مستمعي الأحداث
+                document.getElementById('questionType').addEventListener('change', () => this.generateAnswerKeyForm());
+                document.getElementById('totalQuestions').addEventListener('input', () => this.generateAnswerKeyForm());
+                
+                this.generateAnswerKeyForm();
+            }
+            
+            generateAnswerKeyForm() {
+                const container = document.getElementById('answerKeyContainer');
+                const totalQuestions = parseInt(document.getElementById('totalQuestions')?.value || 25);
+                const questionType = document.getElementById('questionType')?.value || 'mc';
+                
+                container.innerHTML = '';
+                
+                const questionsPerColumn = Math.ceil(totalQuestions / 2);
+                
+                let html = `<div class="grid grid-cols-2 gap-10">`;
+                
+                for (let col = 0; col < 2; col++) {
+                    html += `<div>`;
+                    for (let q = 1; q <= questionsPerColumn; q++) {
+                        const questionNum = col * questionsPerColumn + q;
+                        if (questionNum > totalQuestions) break;
+                        
+                        html += this.createQuestionInput(questionNum, questionType);
+                    }
+                    html += `</div>`;
+                }
+                
+                html += `</div>`;
+                container.innerHTML = html;
+                
+                // استعادة القيم المحفوظة
+                this.restoreAnswerKeyValues();
+            }
+            
+            createQuestionInput(questionNum, type) {
+                let options = [];
+                let currentAnswer = this.answerKey[questionNum] || '';
+                
+                switch(type) {
+                    case 'mc':
+                        options = ['أ', 'ب', 'ج', 'د'];
+                        break;
+                    case 'tf':
+                        options = ['✓', '✗'];
+                        break;
+                    case 'matching':
+                        options = ['أ', 'ب', 'ج', 'د', 'هـ'];
+                        break;
+                    default:
+                        // مختلط
+                        if (questionNum <= 15) {
+                            options = ['أ', 'ب', 'ج', 'د'];
+                        } else {
+                            options = ['✓', '✗'];
+                        }
+                }
+                
+                return `
+                    <div class="form-group" style="margin-bottom: 10px;">
+                        <label style="font-size: 0.9rem; margin-bottom: 5px;">س${questionNum}</label>
+                        <div class="flex gap-5">
+                            ${options.map(opt => `
+                                <button type="button" 
+                                        class="answer-option-btn ${currentAnswer === opt ? 'active' : ''}"
+                                        data-question="${questionNum}" 
+                                        data-answer="${opt}"
+                                        style="padding: 8px 12px; 
+                                               border: 2px solid ${currentAnswer === opt ? 'var(--secondary)' : 'rgba(255,255,255,0.2)'}; 
+                                               background: ${currentAnswer === opt ? 'var(--secondary)' : 'transparent'};
+                                               color: ${currentAnswer === opt ? 'white' : 'var(--light)'};
+                                               border-radius: 5px;
+                                               cursor: pointer;
+                                               flex: 1;">
+                                    ${opt}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            restoreAnswerKeyValues() {
+                // إضافة مستمعي الأحداث للأزرار
+                document.querySelectorAll('.answer-option-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const question = e.target.dataset.question;
+                        const answer = e.target.dataset.answer;
+                        this.selectAnswer(question, answer);
+                    });
+                });
+            }
+            
+            selectAnswer(question, answer) {
+                this.answerKey[question] = answer;
+                
+                // تحديث الأزرار
+                document.querySelectorAll(`.answer-option-btn[data-question="${question}"]`).forEach(btn => {
+                    btn.classList.remove('active');
+                    btn.style.borderColor = 'rgba(255,255,255,0.2)';
+                    btn.style.background = 'transparent';
+                    btn.style.color = 'var(--light)';
+                });
+                
+                const selectedBtn = document.querySelector(`.answer-option-btn[data-question="${question}"][data-answer="${answer}"]`);
+                if (selectedBtn) {
+                    selectedBtn.classList.add('active');
+                    selectedBtn.style.borderColor = 'var(--secondary)';
+                    selectedBtn.style.background = 'var(--secondary)';
+                    selectedBtn.style.color = 'white';
+                }
+            }
+            
+            saveExam() {
+                const title = document.getElementById('examTitle')?.value;
+                const subject = document.getElementById('examSubject')?.value;
+                const totalQuestions = parseInt(document.getElementById('totalQuestions')?.value || 25);
+                const questionType = document.getElementById('questionType')?.value;
+                const date = document.getElementById('examDate')?.value;
+                
+                if (!title || !subject) {
+                    this.showMessage('يرجى إدخال عنوان الاختبار والمادة', 'error');
+                    return;
+                }
+                
+                if (Object.keys(this.answerKey).length !== totalQuestions) {
+                    this.showMessage(`يرجى تحديد جميع الإجابات (${Object.keys(this.answerKey).length}/${totalQuestions})`, 'error');
+                    return;
+                }
+                
+                const exam = {
+                    id: 'exam_' + Date.now(),
+                    title: title,
+                    subject: subject,
+                    totalQuestions: totalQuestions,
+                    questionType: questionType,
+                    date: date,
+                    answerKey: {...this.answerKey},
+                    teacherId: this.currentUser?.id,
+                    teacherName: this.currentUser?.name,
+                    createdAt: new Date().toISOString()
+                };
+                
+                this.currentExam = exam;
+                this.exams.push(exam);
+                this.saveToLocalStorage();
+                
+                this.showMessage('تم حفظ الاختبار بنجاح!', 'success');
+            }
+            
+            nextToDesign() {
+                this.saveExam();
+                setTimeout(() => {
+                    this.currentStep = 3;
+                    this.renderProgressBar();
+                    this.renderMainContent();
+                }, 1000);
+            }
+            
+            // تصميم ورقة الإجابة المحسنة
+            renderDesignSheet() {
+                const mainContent = document.getElementById('mainContent');
+                
+                if (!this.currentExam) {
+                    mainContent.innerHTML = `
+                        <div class="card text-center">
+                            <h2><i class="fas fa-exclamation-triangle"></i> لا يوجد اختبار محدد</h2>
+                            <p class="mt-20">يرجى إنشاء اختبار أولاً لتصميم ورقة الإجابة</p>
+                            <button onclick="app.currentStep = 2; app.renderProgressBar(); app.renderMainContent();" 
+                                    class="btn btn-primary mt-20">
+                                <i class="fas fa-arrow-left"></i> العودة لإنشاء اختبار
+                            </button>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                mainContent.innerHTML = `
+                    <div class="card">
+                        <h2><i class="fas fa-paint-brush"></i> تصميم ورقة الإجابة الاحترافية</h2>
+                        
+                        <div class="grid grid-cols-3 gap-30 mt-30">
+                            <div>
+                                <h3><i class="fas fa-cog"></i> إعدادات التصميم</h3>
+                                
+                                <div class="form-group">
+                                    <label>قالب الورقة</label>
+                                    <select id="templateSelect" class="form-control">
+                                        <option value="standard" ${this.sheetDesign.template === 'standard' ? 'selected' : ''}>قياسي</option>
+                                        <option value="modern" ${this.sheetDesign.template === 'modern' ? 'selected' : ''}>حديث</option>
+                                        <option value="compact" ${this.sheetDesign.template === 'compact' ? 'selected' : ''}>مضغوط</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>عدد الأعمدة</label>
+                                    <select id="columnsSelect" class="form-control">
+                                        <option value="1" ${this.sheetDesign.columns === 1 ? 'selected' : ''}>عمود واحد</option>
+                                        <option value="2" ${this.sheetDesign.columns === 2 ? 'selected' : ''}>عمودين</option>
+                                        <option value="3" ${this.sheetDesign.columns === 3 ? 'selected' : ''}>ثلاثة أعمدة</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>حجم الدوائر (مم)</label>
+                                    <input type="range" id="bubbleSize" class="form-control" min="4" max="7" value="${this.sheetDesign.bubbleSize}">
+                                    <div style="text-align: center; margin-top: 5px;" id="bubbleSizeValue">${this.sheetDesign.bubbleSize} مم</div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>
+                                        <input type="checkbox" id="includeMatching" ${this.sheetDesign.includeMatching ? 'checked' : ''}>
+                                        تضمين أسئلة المطابقة
+                                    </label>
+                                </div>
+                                
+                                ${this.sheetDesign.includeMatching ? `
+                                    <div class="form-group">
+                                        <label>عدد أسئلة المطابقة</label>
+                                        <input type="number" id="matchingCount" class="form-control" min="1" max="10" value="${this.sheetDesign.matchingCount}">
                                     </div>
+                                ` : ''}
+                                
+                                <div class="form-group">
+                                    <label>
+                                        <input type="checkbox" id="showHeader" ${this.sheetDesign.header ? 'checked' : ''}>
+                                        إظهار الترويسة
+                                    </label>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>
+                                        <input type="checkbox" id="showInstructions" ${this.sheetDesign.instructions ? 'checked' : ''}>
+                                        إظهار التعليمات
+                                    </label>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>
+                                        <input type="checkbox" id="showStudentInfo" ${this.sheetDesign.studentInfo ? 'checked' : ''}>
+                                        إظهار بيانات الطالب
+                                    </label>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>
+                                        <input type="checkbox" id="showQRCode" ${this.sheetDesign.qrCode ? 'checked' : ''}>
+                                        إظبار رمز QR
+                                    </label>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>
+                                        <input type="checkbox" id="showCalibration" ${this.sheetDesign.calibrationMarks ? 'checked' : ''}>
+                                        إظهار علامات المعايرة
+                                    </label>
+                                </div>
+                                
+                                <button onclick="app.updateSheetDesign()" class="btn btn-primary w-full mt-20">
+                                    <i class="fas fa-sync"></i> تحديث التصميم
+                                </button>
+                            </div>
+                            
+                            <div class="col-span-2">
+                                <h3><i class="fas fa-eye"></i> معاينة ورقة الإجابة</h3>
+                                <div id="sheetPreviewContainer" style="background: #f5f5f5; border-radius: 10px; padding: 20px; margin-top: 20px; height: 700px; overflow-y: auto;">
+                                    <div id="sheetPreview"></div>
+                                </div>
+                                
+                                <div class="flex gap-10 mt-20">
+                                    <button onclick="app.generateAnswerSheet()" class="btn btn-success flex-1">
+                                        <i class="fas fa-print"></i> طباعة الورقة
+                                    </button>
+                                    <button onclick="app.saveSheetDesign()" class="btn btn-info flex-1">
+                                        <i class="fas fa-save"></i> حفظ التصميم
+                                    </button>
+                                    <button onclick="app.nextToScan()" class="btn btn-primary flex-1">
+                                        <i class="fas fa-arrow-right"></i> التالي: مسح الأوراق
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // إضافة مستمعي الأحداث
+                document.getElementById('includeMatching')?.addEventListener('change', (e) => {
+                    this.sheetDesign.includeMatching = e.target.checked;
+                    this.generateAnswerSheet();
+                });
+                
+                document.getElementById('bubbleSize')?.addEventListener('input', (e) => {
+                    document.getElementById('bubbleSizeValue').textContent = e.target.value + ' مم';
+                    this.sheetDesign.bubbleSize = parseInt(e.target.value);
+                    this.generateAnswerSheet();
+                });
+                
+                // توليد الورقة أول مرة
+                this.generateAnswerSheet();
+            }
+            
+            updateSheetDesign() {
+                this.sheetDesign.template = document.getElementById('templateSelect')?.value || 'standard';
+                this.sheetDesign.columns = parseInt(document.getElementById('columnsSelect')?.value || 2);
+                this.sheetDesign.includeMatching = document.getElementById('includeMatching')?.checked || false;
+                this.sheetDesign.matchingCount = parseInt(document.getElementById('matchingCount')?.value || 5);
+                this.sheetDesign.header = document.getElementById('showHeader')?.checked || false;
+                this.sheetDesign.instructions = document.getElementById('showInstructions')?.checked || false;
+                this.sheetDesign.studentInfo = document.getElementById('showStudentInfo')?.checked || false;
+                this.sheetDesign.qrCode = document.getElementById('showQRCode')?.checked || false;
+                this.sheetDesign.calibrationMarks = document.getElementById('showCalibration')?.checked || false;
+                
+                this.generateAnswerSheet();
+            }
+            
+            generateAnswerSheet() {
+                if (!this.currentExam) return;
+                
+                const preview = document.getElementById('sheetPreview');
+                const exam = this.currentExam;
+                const design = this.sheetDesign;
+                
+                // إنشاء ورقة الإجابة المحسنة
+                let sheetHTML = `
+                    <div class="answer-sheet-page">
+                        <!-- علامات المعايرة -->
+                        ${design.calibrationMarks ? `
+                            <div class="calibration-mark top-left"></div>
+                            <div class="calibration-mark top-right"></div>
+                            <div class="calibration-mark bottom-left"></div>
+                            <div class="calibration-mark bottom-right"></div>
+                            <div class="calibration-mark top-center"></div>
+                            <div class="calibration-mark bottom-center"></div>
+                        ` : ''}
+                        
+                        <!-- رمز QR -->
+                        ${design.qrCode ? `
+                            <div class="qr-code-area">
+                                <div>رمز الاختبار<br>${exam.id.substring(0, 8)}</div>
+                            </div>
+                        ` : ''}
+                        
+                        <!-- الترويسة -->
+                        ${design.header ? `
+                            <div class="sheet-header">
+                                <div class="sheet-title">ورقة إجابة الطالب</div>
+                                <div class="exam-info">
+                                    ${exam.title} - ${exam.subject}<br>
+                                    عدد الأسئلة: ${exam.totalQuestions} | التاريخ: ${new Date(exam.date).toLocaleDateString('ar-SA')}
+                                </div>
+                            </div>
+                        ` : ''}
+                        
+                        <!-- بيانات الطالب -->
+                        ${design.studentInfo ? `
+                            <div class="student-info-section">
+                                <div class="student-info-title">📋 بيانات الطالب</div>
+                                <div class="student-fields">
+                                    <div class="field-group">
+                                        <div class="field-label">اسم الطالب:</div>
+                                        <div class="field-input"></div>
+                                    </div>
+                                    <div class="field-group">
+                                        <div class="field-label">رقم الطالب:</div>
+                                        <div class="field-input"></div>
+                                    </div>
+                                    <div class="field-group">
+                                        <div class="field-label">الصف/الشعبة:</div>
+                                        <div class="field-input"></div>
+                                    </div>
+                                    <div class="field-group">
+                                        <div class="field-label">التاريخ:</div>
+                                        <div class="field-input">${new Date().toLocaleDateString('ar-SA')}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        ` : ''}
+                        
+                        <!-- التعليمات -->
+                        ${design.instructions ? `
+                            <div class="instructions">
+                                <h4>📝 تعليمات مهمة للطالب</h4>
+                                <div class="instructions-grid">
+                                    <div>
+                                        <p>✓ استخدم قلم رصاص ناعم (2B)</p>
+                                        <p>✓ ظلل الدائرة كاملة</p>
+                                        <p>✓ لا تستخدم علامات أخرى</p>
+                                        <p>✓ تأكد من صحة البيانات</p>
+                                    </div>
+                                    <div>
+                                        <p>✓ لا تخرج عن حدود الدائرة</p>
+                                        <p>✓ امسح الخطأ بوضوح</p>
+                                        <p>✓ اختر إجابة واحدة فقط</p>
+                                        <p>✓ راجع إجاباتك قبل التسليم</p>
+                                    </div>
+                                </div>
+                            </div>
+                        ` : ''}
+                        
+                        <!-- قسم الأسئلة -->
+                        <div class="questions-container">
+                            <h3 style="text-align: center; margin-bottom: 5mm; color: #2c3e50;">الأسئلة</h3>
+                            <div class="questions-columns">
+                `;
+                
+                // حساب الأسئلة لكل عمود
+                const questionsPerColumn = Math.ceil(exam.totalQuestions / design.columns);
+                const questionType = exam.questionType;
+                
+                for (let col = 0; col < design.columns; col++) {
+                    sheetHTML += `<div>`;
+                    
+                    for (let q = 0; q < questionsPerColumn; q++) {
+                        const questionNum = col * questionsPerColumn + q + 1;
+                        if (questionNum > exam.totalQuestions) break;
+                        
+                        sheetHTML += this.generateQuestionItem(questionNum, questionType, design.bubbleSize);
+                    }
+                    
+                    sheetHTML += `</div>`;
+                }
+                
+                sheetHTML += `
+                            </div>
+                        </div>
+                `;
+                
+                // قسم المطابقة (إذا كان موجوداً)
+                if (design.includeMatching && design.matchingCount > 0) {
+                    sheetHTML += this.generateMatchingSection(design.matchingCount, design.bubbleSize);
+                }
+                
+                // التذييل
+                sheetHTML += `
+                        <div class="sheet-footer">
+                            نظام التصحيح الآلي SamieGrade - تم إنشاء الورقة بتاريخ ${new Date().toLocaleDateString('ar-SA')}
+                        </div>
+                    </div>
+                `;
+                
+                preview.innerHTML = sheetHTML;
+            }
+            
+            generateQuestionItem(questionNum, type, bubbleSize) {
+                let options = [];
+                let optionLabels = [];
+                
+                // تحديد خيارات السؤال حسب النوع
+                if (type === 'mc') {
+                    options = ['أ', 'ب', 'ج', 'د'];
+                    optionLabels = ['أ', 'ب', 'ج', 'د'];
+                } else if (type === 'tf') {
+                    options = ['✓', '✗'];
+                    optionLabels = ['صح', 'خطأ'];
+                } else if (type === 'matching') {
+                    options = ['أ', 'ب', 'ج', 'د', 'هـ'];
+                    optionLabels = ['أ', 'ب', 'ج', 'د', 'هـ'];
+                } else {
+                    // مختلط
+                    if (questionNum % 2 === 0) {
+                        options = ['أ', 'ب', 'ج', 'د'];
+                        optionLabels = ['أ', 'ب', 'ج', 'د'];
+                    } else {
+                        options = ['✓', '✗'];
+                        optionLabels = ['صح', 'خطأ'];
+                    }
+                }
+                
+                return `
+                    <div class="question-item">
+                        <div class="question-number">${questionNum}</div>
+                        <div class="question-options">
+                            ${options.map((opt, index) => `
+                                <div class="option">
+                                    <div class="bubble" style="width: ${bubbleSize}mm; height: ${bubbleSize}mm;"></div>
+                                    <div class="option-label">${optionLabels[index]}</div>
                                 </div>
                             `).join('')}
                         </div>
-                        <div style="margin-top: 30px; text-align: center; color: #666;">
-                            <p>تعليمات: ظلل الدائرة المقابلة للإجابة الصحيحة بقلم رصاص</p>
-                        </div>
-                    </div>
-                    <div class="no-print" style="text-align: center; margin-top: 20px;">
-                        <button onclick="window.print()">طباعة الورقة</button>
-                    </div>
-                </body>
-                </html>
-            `;
-            
-            // Open in new window for printing
-            const printWindow = window.open('', '_blank');
-            printWindow.document.write(answerSheetHTML);
-            printWindow.document.close();
-        }
-
-        // Camera Functions
-        let stream = null;
-        let flashOn = false;
-
-        async function openCamera() {
-            try {
-                elements.cameraModal.classList.remove('hidden');
-                stream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: 'environment' },
-                    audio: false
-                });
-                elements.cameraVideo.srcObject = stream;
-            } catch (error) {
-                showAlert('خطأ في تشغيل الكاميرا: ' + error.message, 'error');
-                closeCamera();
-            }
-        }
-
-        function closeCamera() {
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
-                stream = null;
-            }
-            elements.cameraModal.classList.add('hidden');
-        }
-
-        function toggleFlash() {
-            flashOn = !flashOn;
-            // In a real app, you would control the torch here
-            showAlert(flashOn ? 'تم تشغيل الفلاش' : 'تم إيقاف الفلاش', 'success');
-        }
-
-        function capturePhoto() {
-            const video = elements.cameraVideo;
-            const canvas = elements.cameraCanvas;
-            
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            
-            const imageData = canvas.toDataURL('image/jpeg');
-            processCapturedImage(imageData);
-            closeCamera();
-        }
-
-        // File Handling
-        function handleFileUpload(event) {
-            const file = event.target.files[0];
-            if (file) {
-                if (file.type === 'application/pdf') {
-                    showAlert('يتم الآن معالجة ملف PDF...', 'success');
-                    // PDF processing would go here
-                } else if (file.type.startsWith('image/')) {
-                    processImageFile(file);
-                } else {
-                    showAlert('نوع الملف غير مدعوم', 'error');
-                }
-            }
-        }
-
-        function handleDragOver(event) {
-            event.preventDefault();
-            event.stopPropagation();
-            event.dataTransfer.dropEffect = 'copy';
-        }
-
-        function handleDrop(event) {
-            event.preventDefault();
-            event.stopPropagation();
-            
-            const files = event.dataTransfer.files;
-            if (files.length > 0) {
-                handleFileUpload({ target: { files } });
-            }
-        }
-
-        function processImageFile(file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                processCapturedImage(e.target.result);
-            };
-            reader.readAsDataURL(file);
-        }
-
-        function processCapturedImage(imageData) {
-            showLoading(true);
-            
-            // Display preview
-            const img = new Image();
-            img.onload = function() {
-                const canvas = elements.previewCanvas;
-                const ctx = canvas.getContext('2d');
-                
-                // Set canvas size
-                canvas.width = Math.min(img.width, 800);
-                canvas.height = (img.height / img.width) * canvas.width;
-                
-                // Draw image
-                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                
-                // Show preview
-                elements.previewContainer.classList.remove('hidden');
-                
-                // Process for OMR detection
-                setTimeout(() => {
-                    simulateOMRDetection();
-                    showLoading(false);
-                }, 1500);
-            };
-            img.src = imageData;
-        }
-
-        // OMR Processing
-        function simulateOMRDetection() {
-            if (!state.testConfig.correctAnswers || state.testConfig.correctAnswers.length === 0) {
-                showAlert('يرجى إعداد الاختبار أولاً', 'error');
-                return;
-            }
-            
-            const studentName = elements.studentName.value || 'طالب غير معروف';
-            const totalQuestions = state.testConfig.totalQuestions;
-            
-            // Simulate reading answers (in real app, this would use image processing)
-            const detectedAnswers = Array.from({length: totalQuestions}, () => {
-                const options = ['A', 'B', 'C', 'D', ''];
-                return options[Math.floor(Math.random() * options.length)];
-            });
-            
-            // Grade the answers
-            const correctAnswers = state.testConfig.correctAnswers;
-            let score = 0;
-            const results = [];
-            
-            for (let i = 0; i < totalQuestions; i++) {
-                const isCorrect = detectedAnswers[i] === correctAnswers[i];
-                if (isCorrect) score++;
-                results.push({
-                    question: i + 1,
-                    studentAnswer: detectedAnswers[i] || 'لم يجب',
-                    correctAnswer: correctAnswers[i],
-                    isCorrect: isCorrect
-                });
-            }
-            
-            const percentage = Math.round((score / totalQuestions) * 100);
-            
-            // Save result
-            const result = {
-                id: Date.now(),
-                studentName: studentName,
-                testName: state.testConfig.name,
-                date: new Date().toLocaleDateString('ar-SA'),
-                score: score,
-                total: totalQuestions,
-                percentage: percentage,
-                answers: results,
-                grade: getGradeLevel(percentage)
-            };
-            
-            state.results.push(result);
-            showResult(result);
-        }
-
-        function getGradeLevel(percentage) {
-            if (percentage >= 90) return { text: 'ممتاز', class: 'grade-excellent' };
-            if (percentage >= 75) return { text: 'جيد جداً', class: 'grade-good' };
-            if (percentage >= 50) return { text: 'مقبول', class: 'grade-average' };
-            return { text: 'ضعيف', class: 'grade-poor' };
-        }
-
-        function showResult(result) {
-            const grade = getGradeLevel(result.percentage);
-            
-            elements.resultDetails.innerHTML = `
-                <div class="stats">
-                    <div class="stat-box">
-                        <div class="number">${result.studentName}</div>
-                        <div class="label">اسم الطالب</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="number">${result.testName}</div>
-                        <div class="label">اسم الاختبار</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="number">${result.score}/${result.total}</div>
-                        <div class="label">الدرجة</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="number">${result.percentage}%</div>
-                        <div class="label">النسبة</div>
-                    </div>
-                </div>
-                
-                <div style="text-align: center; margin: 20px 0;">
-                    <span class="grade-badge ${grade.class}" style="font-size: 1.2rem; padding: 10px 30px;">
-                        ${grade.text}
-                    </span>
-                </div>
-                
-                <h3 style="margin: 30px 0 15px; color: var(--primary);">
-                    <i class="fas fa-list-check"></i> تفاصيل الإجابات
-                </h3>
-                
-                <div style="max-height: 300px; overflow-y: auto; background: #f8f9fa; border-radius: 10px; padding: 15px;">
-                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px;">
-                        ${result.answers.map((answer, index) => `
-                            <div style="
-                                background: ${answer.isCorrect ? '#d4edda' : '#f8d7da'};
-                                border: 1px solid ${answer.isCorrect ? '#c3e6cb' : '#f5c6cb'};
-                                border-radius: 8px;
-                                padding: 8px;
-                                text-align: center;
-                                font-size: 0.9rem;
-                            ">
-                                <div style="font-weight: bold; color: var(--dark);">س ${answer.question}</div>
-                                <div style="color: ${answer.isCorrect ? '#155724' : '#721c24'};">
-                                    ${answer.studentAnswer} → ${answer.correctAnswer}
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-                
-                <div style="margin-top: 20px; display: flex; gap: 10px;">
-                    <button onclick="printSingleResult(${result.id})" class="btn btn-primary">
-                        <i class="fas fa-print"></i> طباعة النتيجة
-                    </button>
-                    <button onclick="showSection('scanSection')" class="btn btn-success">
-                        <i class="fas fa-plus"></i> تصحيح آخر
-                    </button>
-                </div>
-            `;
-            
-            elements.currentResult.classList.remove('hidden');
-            showAlert('تم تصحيح الإجابات بنجاح!', 'success');
-            loadResults();
-        }
-
-        // Results Management
-        function loadResults() {
-            if (state.results.length === 0) {
-                elements.resultsContainer.innerHTML = `
-                    <div style="text-align: center; padding: 40px; color: var(--gray);">
-                        <i class="fas fa-inbox fa-3x" style="margin-bottom: 20px;"></i>
-                        <p>لا توجد نتائج لعرضها</p>
                     </div>
                 `;
-                return;
             }
             
-            // Update stats
-            elements.totalStudents.textContent = state.results.length;
+            generateMatchingSection(count, bubbleSize) {
+                const letters = ['أ', 'ب', 'ج', 'د', 'هـ', 'و', 'ز', 'ح', 'ط', 'ي'];
+                const numbers = ['١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩', '١٠'];
+                
+                return `
+                    <div class="matching-section">
+                        <div class="matching-title">أسئلة المطابقة</div>
+                        <div class="matching-pairs">
+                            <div class="matching-left">
+                                ${Array.from({length: count}, (_, i) => `
+                                    <div class="matching-item">${numbers[i]}</div>
+                                `).join('')}
+                            </div>
+                            
+                            <div class="matching-arrow">←</div>
+                            
+                            <div class="matching-right">
+                                ${Array.from({length: count}, (_, i) => `
+                                    <div class="matching-item">${letters[i]}</div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        
+                        <div class="matching-title mt-20">اختيار الإجابة</div>
+                        <div class="matching-bubbles">
+                            ${Array.from({length: count}, (_, i) => `
+                                <div class="option">
+                                    <div style="font-weight: bold; margin-bottom: 2mm;">${i + 1}</div>
+                                    <div style="display: flex; gap: 1mm;">
+                                        ${letters.slice(0, count).map(letter => `
+                                            <div class="bubble" style="width: ${bubbleSize}mm; height: ${bubbleSize}mm;"></div>
+                                        `).join('')}
+                                    </div>
+                                    <div style="font-size: 8pt; margin-top: 1mm;">${letters.slice(0, count).join(' ')}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
             
-            const percentages = state.results.map(r => r.percentage);
-            const average = Math.round(percentages.reduce((a, b) => a + b, 0) / percentages.length);
-            const highest = Math.max(...percentages);
-            const lowest = Math.min(...percentages);
+            saveSheetDesign() {
+                this.saveToLocalStorage();
+                this.showMessage('تم حفظ تصميم ورقة الإجابة بنجاح!', 'success');
+            }
             
-            elements.averageScore.textContent = `${average}%`;
-            elements.highestScore.textContent = `${highest}%`;
-            elements.lowestScore.textContent = `${lowest}%`;
+            nextToScan() {
+                this.currentStep = 4;
+                this.renderProgressBar();
+                this.renderMainContent();
+            }
             
-            // Display results table
-            elements.resultsContainer.innerHTML = `
-                <table class="results-table">
-                    <thead>
+            // مسح الأوراق
+            renderScanPapers() {
+                const mainContent = document.getElementById('mainContent');
+                mainContent.innerHTML = `
+                    <div class="card">
+                        <h2><i class="fas fa-camera"></i> مسح أوراق الإجابة</h2>
+                        
+                        <div class="scanner-options">
+                            <div class="scanner-option" onclick="app.startCamera()">
+                                <i class="fas fa-camera"></i>
+                                <h3>كاميرا الويب</h3>
+                                <p>استخدم كاميرا الجهاز لالتقاط صورة مباشرة</p>
+                            </div>
+                            
+                            <div class="scanner-option" onclick="app.startMobileCamera()">
+                                <i class="fas fa-mobile-alt"></i>
+                                <h3>كاميرا الجوال</h3>
+                                <p>استخدام كاميرا الجوال للتقاط صور عالية الجودة</p>
+                            </div>
+                            
+                            <div class="scanner-option" onclick="app.uploadImage()">
+                                <i class="fas fa-scanner"></i>
+                                <h3>ماسح ضوئي</h3>
+                                <p>رفع صورة من الماسح الضوئي أو الملفات</p>
+                            </div>
+                        </div>
+                        
+                        <div id="cameraSection" class="camera-section hidden">
+                            <div class="camera-container">
+                                <div>
+                                    <h3><i class="fas fa-video"></i> معاينة الكاميرا</h3>
+                                    <div class="camera-preview">
+                                        <video id="cameraVideo" autoplay playsinline></video>
+                                        <div class="camera-overlay"></div>
+                                    </div>
+                                    <div class="camera-controls">
+                                        <button onclick="app.captureImage()" class="btn btn-success">
+                                            <i class="fas fa-camera"></i> التقاط صورة
+                                        </button>
+                                        <button onclick="app.stopCamera()" class="btn btn-danger">
+                                            <i class="fas fa-stop"></i> إيقاف الكاميرا
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <h3><i class="fas fa-image"></i> الصورة الملتقطة</h3>
+                                    <canvas id="capturedCanvas" style="width: 100%; height: 400px; background: #f8f9fa; border-radius: 10px; display: none;"></canvas>
+                                    <div id="scanInstructions" style="text-align: center; padding: 50px; color: var(--gray);">
+                                        <i class="fas fa-camera fa-3x"></i>
+                                        <p class="mt-20">سيظهر هنا معاينة الصورة الملتقطة</p>
+                                    </div>
+                                    
+                                    <div id="scanControls" class="hidden">
+                                        <div class="form-group mt-20">
+                                            <label><i class="fas fa-user-graduate"></i> اسم الطالب</label>
+                                            <input type="text" id="scannedStudentName" class="form-control" placeholder="اسم الطالب">
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label><i class="fas fa-id-card"></i> رقم الطالب</label>
+                                            <input type="text" id="scannedStudentId" class="form-control" placeholder="رقم الطالب">
+                                        </div>
+                                        
+                                        <button onclick="app.processScannedImage()" class="btn btn-primary w-full">
+                                            <i class="fas fa-cogs"></i> معالجة الصورة
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="uploadSection" class="hidden">
+                            <div class="form-group">
+                                <label><i class="fas fa-upload"></i> رفع صورة الورقة</label>
+                                <input type="file" id="imageUpload" accept="image/*" class="form-control" multiple>
+                                <p style="color: var(--gray); margin-top: 5px;">يمكن رفع أكثر من صورة لمعالجة جماعية</p>
+                            </div>
+                            
+                            <div id="uploadPreview" class="grid grid-cols-3 gap-10 mt-20"></div>
+                            
+                            <button onclick="app.processUploadedImages()" class="btn btn-primary w-full mt-20">
+                                <i class="fas fa-play"></i> بدء المعالجة
+                            </button>
+                        </div>
+                        
+                        <div class="flex gap-10 mt-30">
+                            <button onclick="app.prevStep()" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> رجوع
+                            </button>
+                            <button onclick="app.nextToResults()" class="btn btn-primary">
+                                <i class="fas fa-arrow-right"></i> التالي: النتائج
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            async startCamera() {
+                try {
+                    document.getElementById('cameraSection').classList.remove('hidden');
+                    
+                    const constraints = {
+                        video: {
+                            facingMode: 'environment',
+                            width: { ideal: 1280 },
+                            height: { ideal: 720 }
+                        }
+                    };
+                    
+                    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                    this.cameraStream = stream;
+                    
+                    const video = document.getElementById('cameraVideo');
+                    video.srcObject = stream;
+                    
+                    this.showMessage('تم تشغيل الكاميرا بنجاح', 'success');
+                } catch (error) {
+                    console.error('خطأ في تشغيل الكاميرا:', error);
+                    this.showMessage('خطأ في تشغيل الكاميرا: ' + error.message, 'error');
+                }
+            }
+            
+            startMobileCamera() {
+                this.showMessage('افتح الكاميرا على جوالك ثم التقط صورة وارفعها', 'info');
+                document.getElementById('uploadSection').classList.remove('hidden');
+                document.getElementById('cameraSection').classList.add('hidden');
+            }
+            
+            uploadImage() {
+                document.getElementById('uploadSection').classList.remove('hidden');
+                document.getElementById('cameraSection').classList.add('hidden');
+                
+                const uploadInput = document.getElementById('imageUpload');
+                const preview = document.getElementById('uploadPreview');
+                
+                uploadInput.addEventListener('change', (e) => {
+                    preview.innerHTML = '';
+                    const files = Array.from(e.target.files);
+                    
+                    files.forEach((file, index) => {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            const img = document.createElement('img');
+                            img.src = e.target.result;
+                            img.style.width = '100%';
+                            img.style.height = '150px';
+                            img.style.objectFit = 'cover';
+                            img.style.borderRadius = '5px';
+                            img.style.border = '2px solid var(--secondary)';
+                            img.dataset.index = index;
+                            
+                            const div = document.createElement('div');
+                            div.appendChild(img);
+                            div.innerHTML += `<div style="text-align: center; margin-top: 5px; font-size: 0.8rem;">${file.name}</div>`;
+                            
+                            preview.appendChild(div);
+                        };
+                        reader.readAsDataURL(file);
+                    });
+                });
+            }
+            
+            captureImage() {
+                const video = document.getElementById('cameraVideo');
+                const canvas = document.getElementById('capturedCanvas');
+                const ctx = canvas.getContext('2d');
+                
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                
+                canvas.style.display = 'block';
+                document.getElementById('scanInstructions').style.display = 'none';
+                document.getElementById('scanControls').classList.remove('hidden');
+                
+                this.showMessage('تم التقاط الصورة بنجاح', 'success');
+            }
+            
+            stopCamera() {
+                if (this.cameraStream) {
+                    this.cameraStream.getTracks().forEach(track => track.stop());
+                    this.cameraStream = null;
+                    
+                    const video = document.getElementById('cameraVideo');
+                    video.srcObject = null;
+                    
+                    this.showMessage('تم إيقاف الكاميرا', 'success');
+                }
+            }
+            
+            processScannedImage() {
+                const studentName = document.getElementById('scannedStudentName')?.value;
+                const studentId = document.getElementById('scannedStudentId')?.value;
+                
+                if (!studentName || !studentId) {
+                    this.showMessage('يرجى إدخال اسم الطالب ورقمه', 'error');
+                    return;
+                }
+                
+                this.showLoading('جاري معالجة الصورة وتحليل الإجابات...');
+                
+                // محاكاة معالجة الصورة
+                setTimeout(() => {
+                    this.hideLoading();
+                    this.simulateScanResult(studentName, studentId);
+                }, 2000);
+            }
+            
+            processUploadedImages() {
+                const files = document.getElementById('imageUpload').files;
+                if (files.length === 0) {
+                    this.showMessage('يرجى اختيار صور للرفع', 'error');
+                    return;
+                }
+                
+                this.showLoading(`جاري معالجة ${files.length} صورة...`);
+                
+                setTimeout(() => {
+                    this.hideLoading();
+                    
+                    Array.from(files).forEach((file, index) => {
+                        const studentName = `طالب ${index + 1}`;
+                        const studentId = `ST${1000 + index}`;
+                        this.simulateScanResult(studentName, studentId);
+                    });
+                    
+                    this.showMessage(`تمت معالجة ${files.length} صورة بنجاح`, 'success');
+                }, 3000);
+            }
+            
+            simulateScanResult(studentName, studentId) {
+                if (!this.currentExam) return;
+                
+                const exam = this.currentExam;
+                const totalQuestions = exam.totalQuestions;
+                
+                // محاكاة النتائج
+                let correctCount = 0;
+                const studentAnswers = {};
+                
+                for (let i = 1; i <= totalQuestions; i++) {
+                    const correctAnswer = exam.answerKey[i];
+                    const isCorrect = Math.random() > 0.3; // 70% احتمالية الإجابة الصحيحة
+                    
+                    if (isCorrect) {
+                        studentAnswers[i] = correctAnswer;
+                        correctCount++;
+                    } else {
+                        // إجابة خاطئة
+                        if (exam.questionType === 'mc' || exam.questionType === 'matching') {
+                            const options = ['أ', 'ب', 'ج', 'د'];
+                            const wrongOptions = options.filter(opt => opt !== correctAnswer);
+                            studentAnswers[i] = wrongOptions[Math.floor(Math.random() * wrongOptions.length)];
+                        } else if (exam.questionType === 'tf') {
+                            studentAnswers[i] = correctAnswer === '✓' ? '✗' : '✓';
+                        } else {
+                            // مختلط
+                            if (i % 2 === 0) {
+                                const options = ['أ', 'ب', 'ج', 'د'];
+                                const wrongOptions = options.filter(opt => opt !== correctAnswer);
+                                studentAnswers[i] = wrongOptions[Math.floor(Math.random() * wrongOptions.length)];
+                            } else {
+                                studentAnswers[i] = correctAnswer === '✓' ? '✗' : '✓';
+                            }
+                        }
+                    }
+                }
+                
+                const percentage = Math.round((correctCount / totalQuestions) * 100);
+                const grade = this.getGrade(percentage);
+                
+                const result = {
+                    id: 'result_' + Date.now(),
+                    studentName: studentName,
+                    studentId: studentId,
+                    examId: exam.id,
+                    examTitle: exam.title,
+                    examSubject: exam.subject,
+                    totalQuestions: totalQuestions,
+                    correctAnswers: correctCount,
+                    percentage: percentage,
+                    grade: grade,
+                    studentAnswers: studentAnswers,
+                    answerKey: exam.answerKey,
+                    teacherId: this.currentUser?.id,
+                    teacherName: this.currentUser?.name,
+                    scannedAt: new Date().toISOString(),
+                    source: 'كاميرا/ماسح'
+                };
+                
+                this.results.push(result);
+                this.saveToLocalStorage();
+                
+                this.showResultModal(result);
+            }
+            
+            getGrade(percentage) {
+                if (percentage >= 90) return { text: 'ممتاز', class: 'grade-excellent' };
+                if (percentage >= 80) return { text: 'جيد جداً', class: 'grade-good' };
+                if (percentage >= 70) return { text: 'جيد', class: 'grade-average' };
+                if (percentage >= 50) return { text: 'مقبول', class: 'grade-average' };
+                return { text: 'ضعيف', class: 'grade-poor' };
+            }
+            
+            showResultModal(result) {
+                const modal = document.getElementById('resultModal');
+                const content = document.getElementById('resultModalContent');
+                
+                content.innerHTML = `
+                    <h2><i class="fas fa-check-circle" style="color: var(--success);"></i> تمت معالجة الورقة بنجاح</h2>
+                    
+                    <div class="grid grid-cols-2 gap-20 mt-30">
+                        <div>
+                            <h3>معلومات الطالب</h3>
+                            <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px; margin-top: 10px;">
+                                <p><strong>الاسم:</strong> ${result.studentName}</p>
+                                <p><strong>الرقم:</strong> ${result.studentId}</p>
+                                <p><strong>الاختبار:</strong> ${result.examTitle}</p>
+                                <p><strong>المادة:</strong> ${result.examSubject}</p>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h3>النتيجة</h3>
+                            <div style="background: rgba(52,152,219,0.2); padding: 20px; border-radius: 10px; text-align: center; margin-top: 10px;">
+                                <div style="font-size: 3rem; font-weight: bold; color: var(--light);">
+                                    ${result.percentage}%
+                                </div>
+                                <div class="grade-badge ${result.grade.class}" style="font-size: 1.2rem; margin-top: 10px;">
+                                    ${result.grade.text}
+                                </div>
+                                <p style="margin-top: 10px; color: var(--gray);">
+                                    ${result.correctAnswers} من ${result.totalQuestions} إجابة صحيحة
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-30">
+                        <h3>تفاصيل الإجابات</h3>
+                        <div style="max-height: 200px; overflow-y: auto; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; margin-top: 10px;">
+                            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); gap: 5px;">
+                                ${Object.entries(result.studentAnswers).map(([q, answer]) => {
+                                    const isCorrect = answer === result.answerKey[q];
+                                    return `
+                                        <div style="text-align: center; padding: 5px; background: ${isCorrect ? 'rgba(39,174,96,0.2)' : 'rgba(231,76,60,0.2)'}; border-radius: 5px;">
+                                            <div style="font-size: 0.8rem;">س${q}</div>
+                                            <div style="font-weight: bold; color: ${isCorrect ? 'var(--success)' : 'var(--danger)'};">${answer}</div>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-10 mt-30">
+                        <button onclick="app.saveResultToExcel(${JSON.stringify(result).replace(/"/g, '&quot;')})" class="btn btn-success">
+                            <i class="fas fa-file-excel"></i> تصدير إلى Excel
+                        </button>
+                        <button onclick="app.printResult(${JSON.stringify(result).replace(/"/g, '&quot;')})" class="btn btn-primary">
+                            <i class="fas fa-print"></i> طباعة النتيجة
+                        </button>
+                        <button onclick="closeModal('resultModal')" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> إغلاق
+                        </button>
+                    </div>
+                `;
+                
+                modal.classList.add('active');
+            }
+            
+            prevStep() {
+                this.currentStep--;
+                this.renderProgressBar();
+                this.renderMainContent();
+            }
+            
+            nextToResults() {
+                this.currentStep = 5;
+                this.renderProgressBar();
+                this.renderMainContent();
+            }
+            
+            // النتائج والتصدير
+            renderResults() {
+                const mainContent = document.getElementById('mainContent');
+                mainContent.innerHTML = `
+                    <div class="card">
+                        <div class="flex justify-between items-center mb-30">
+                            <h2><i class="fas fa-chart-bar"></i> النتائج والإحصائيات</h2>
+                            <div class="flex gap-10">
+                                <button onclick="app.exportAllResults()" class="btn btn-success">
+                                    <i class="fas fa-file-excel"></i> تصدير جميع النتائج
+                                </button>
+                                <button onclick="app.refreshResults()" class="btn btn-primary">
+                                    <i class="fas fa-sync"></i> تحديث
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-icon">📊</div>
+                                <div class="stat-value">${this.results.length}</div>
+                                <div class="stat-label">إجمالي النتائج</div>
+                            </div>
+                            
+                            <div class="stat-card">
+                                <div class="stat-icon">📈</div>
+                                <div class="stat-value">${this.getAverageScore()}%</div>
+                                <div class="stat-label">المعدل العام</div>
+                            </div>
+                            
+                            <div class="stat-card">
+                                <div class="stat-icon">🏆</div>
+                                <div class="stat-value">${this.getTopScore()}%</div>
+                                <div class="stat-label">أعلى درجة</div>
+                            </div>
+                            
+                            <div class="stat-card">
+                                <div class="stat-icon">🎯</div>
+                                <div class="stat-value">${this.getPassRate()}%</div>
+                                <div class="stat-label">معدل النجاح</div>
+                            </div>
+                        </div>
+                        
+                        <div class="export-options mt-30">
+                            <div class="export-option" onclick="app.exportToExcel('all')">
+                                <i class="fas fa-file-excel"></i>
+                                <h4>جميع النتائج</h4>
+                                <p>تصدير جميع نتائج الطلاب</p>
+                            </div>
+                            
+                            <div class="export-option" onclick="app.exportToExcel('current')">
+                                <i class="fas fa-file-alt"></i>
+                                <h4>نتائج الاختبار الحالي</h4>
+                                <p>نتائج ${this.currentExam?.title || 'الاختبار الحالي'}</p>
+                            </div>
+                            
+                            <div class="export-option" onclick="app.exportToPDF()">
+                                <i class="fas fa-file-pdf"></i>
+                                <h4>تقرير PDF</h4>
+                                <p>تقرير تفصيلي بصيغة PDF</p>
+                            </div>
+                            
+                            <div class="export-option" onclick="app.exportStatistics()">
+                                <i class="fas fa-chart-pie"></i>
+                                <h4>إحصائيات مفصلة</h4>
+                                <p>إحصائيات وتحليلات متقدمة</p>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-30">
+                            <h3><i class="fas fa-history"></i> أحدث النتائج</h3>
+                            <div id="resultsTable" style="margin-top: 20px;">
+                                ${this.generateResultsTable()}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            getAverageScore() {
+                if (this.results.length === 0) return 0;
+                const total = this.results.reduce((sum, r) => sum + r.percentage, 0);
+                return Math.round(total / this.results.length);
+            }
+            
+            getTopScore() {
+                if (this.results.length === 0) return 0;
+                return Math.max(...this.results.map(r => r.percentage));
+            }
+            
+            getPassRate() {
+                if (this.results.length === 0) return 0;
+                const passCount = this.results.filter(r => r.percentage >= 50).length;
+                return Math.round((passCount / this.results.length) * 100);
+            }
+            
+            generateResultsTable() {
+                if (this.results.length === 0) {
+                    return `
+                        <div class="text-center" style="padding: 40px; color: var(--gray);">
+                            <i class="fas fa-inbox fa-3x"></i>
+                            <p class="mt-20">لا توجد نتائج لعرضها</p>
+                        </div>
+                    `;
+                }
+                
+                const recentResults = this.results.slice(-10).reverse();
+                
+                let tableHTML = `
+                    <table class="results-table">
+                        <thead>
+                            <tr>
+                                <th>اسم الطالب</th>
+                                <th>رقم الطالب</th>
+                                <th>الاختبار</th>
+                                <th>التاريخ</th>
+                                <th>الدرجة</th>
+                                <th>النسبة</th>
+                                <th>التقدير</th>
+                                <th>خيارات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                recentResults.forEach(result => {
+                    const grade = this.getGrade(result.percentage);
+                    const date = new Date(result.scannedAt).toLocaleDateString('ar-SA');
+                    
+                    tableHTML += `
                         <tr>
-                            <th>#</th>
-                            <th>اسم الطالب</th>
-                            <th>الاختبار</th>
-                            <th>التاريخ</th>
-                            <th>الدرجة</th>
-                            <th>النسبة</th>
-                            <th>التقدير</th>
-                            <th>خيارات</th>
+                            <td>${result.studentName}</td>
+                            <td>${result.studentId}</td>
+                            <td>${result.examTitle}</td>
+                            <td>${date}</td>
+                            <td>${result.correctAnswers}/${result.totalQuestions}</td>
+                            <td>${result.percentage}%</td>
+                            <td><span class="grade-badge ${grade.class}">${grade.text}</span></td>
+                            <td>
+                                <button onclick="app.viewResultDetails('${result.id}')" class="btn btn-primary" style="padding: 5px 10px;">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button onclick="app.deleteResult('${result.id}')" class="btn btn-danger" style="padding: 5px 10px;">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        ${state.results.map((result, index) => {
-                            const grade = getGradeLevel(result.percentage);
-                            return `
-                                <tr>
-                                    <td>${index + 1}</td>
-                                    <td>${result.studentName}</td>
-                                    <td>${result.testName}</td>
-                                    <td>${result.date}</td>
-                                    <td>${result.score}/${result.total}</td>
-                                    <td>${result.percentage}%</td>
-                                    <td>
-                                        <span class="grade-badge ${grade.class}">
-                                            ${grade.text}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <button onclick="viewResultDetails(${result.id})" class="btn btn-primary" style="padding: 5px 10px; font-size: 0.9rem;">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                        <button onclick="deleteResult(${result.id})" class="btn btn-danger" style="padding: 5px 10px; font-size: 0.9rem;">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                            `;
-                        }).join('')}
-                    </tbody>
-                </table>
-            `;
-        }
-
-        function viewResultDetails(resultId) {
-            const result = state.results.find(r => r.id === resultId);
-            if (result) {
-                showResult(result);
+                    `;
+                });
+                
+                tableHTML += `
+                        </tbody>
+                    </table>
+                `;
+                
+                return tableHTML;
             }
-        }
-
-        function deleteResult(resultId) {
-            if (confirm('هل أنت متأكد من حذف هذه النتيجة؟')) {
-                state.results = state.results.filter(r => r.id !== resultId);
-                loadResults();
-                showAlert('تم حذف النتيجة', 'success');
+            
+            viewResultDetails(resultId) {
+                const result = this.results.find(r => r.id === resultId);
+                if (result) {
+                    this.showResultModal(result);
+                }
             }
-        }
-
-        // Export Functions
-        function exportToExcel() {
-            showAlert('جاري تصدير البيانات إلى Excel...', 'success');
-            // In production, implement Excel export
-        }
-
-        function printResults() {
-            window.print();
-        }
-
-        function printSingleResult(resultId) {
-            const result = state.results.find(r => r.id === resultId);
-            if (result) {
-                const printContent = `
+            
+            deleteResult(resultId) {
+                if (confirm('هل أنت متأكد من حذف هذه النتيجة؟')) {
+                    this.results = this.results.filter(r => r.id !== resultId);
+                    this.saveToLocalStorage();
+                    this.showMessage('تم حذف النتيجة بنجاح', 'success');
+                    this.renderResults();
+                }
+            }
+            
+            refreshResults() {
+                this.renderResults();
+                this.showMessage('تم تحديث النتائج', 'success');
+            }
+            
+            // تصدير Excel
+            exportAllResults() {
+                if (this.results.length === 0) {
+                    this.showMessage('لا توجد نتائج لتصديرها', 'warning');
+                    return;
+                }
+                
+                this.exportToExcel('all');
+            }
+            
+            exportToExcel(type = 'all') {
+                let resultsToExport = [];
+                
+                if (type === 'all') {
+                    resultsToExport = this.results;
+                } else if (type === 'current' && this.currentExam) {
+                    resultsToExport = this.results.filter(r => r.examId === this.currentExam.id);
+                }
+                
+                if (resultsToExport.length === 0) {
+                    this.showMessage('لا توجد نتائج لتصديرها', 'warning');
+                    return;
+                }
+                
+                try {
+                    // تحضير البيانات
+                    const worksheetData = resultsToExport.map(result => ({
+                        'اسم الطالب': result.studentName,
+                        'رقم الطالب': result.studentId,
+                        'الاختبار': result.examTitle,
+                        'المادة': result.examSubject,
+                        'عدد الأسئلة': result.totalQuestions,
+                        'الإجابات الصحيحة': result.correctAnswers,
+                        'النسبة المئوية': result.percentage + '%',
+                        'التقدير': result.grade.text,
+                        'تاريخ المسح': new Date(result.scannedAt).toLocaleDateString('ar-SA'),
+                        'المعلم': result.teacherName,
+                        'مصدر المسح': result.source
+                    }));
+                    
+                    // إنشاء ورقة العمل
+                    const ws = XLSX.utils.json_to_sheet(worksheetData);
+                    
+                    // تحديد عرض الأعمدة
+                    const wscols = [
+                        { wch: 20 }, // اسم الطالب
+                        { wch: 15 }, // رقم الطالب
+                        { wch: 25 }, // الاختبار
+                        { wch: 15 }, // المادة
+                        { wch: 12 }, // عدد الأسئلة
+                        { wch: 15 }, // الإجابات الصحيحة
+                        { wch: 15 }, // النسبة المئوية
+                        { wch: 12 }, // التقدير
+                        { wch: 15 }, // تاريخ المسح
+                        { wch: 20 }, // المعلم
+                        { wch: 15 }  // مصدر المسح
+                    ];
+                    ws['!cols'] = wscols;
+                    
+                    // إنشاء مصنف
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, 'النتائج');
+                    
+                    // إضافة ورقة الإحصائيات
+                    const statsData = this.generateStatisticsData(resultsToExport);
+                    if (statsData.length > 0) {
+                        const ws2 = XLSX.utils.json_to_sheet(statsData);
+                        XLSX.utils.book_append_sheet(wb, ws2, 'الإحصائيات');
+                    }
+                    
+                    // تصدير الملف
+                    const fileName = `نتائج_SamieGrade_${new Date().toISOString().slice(0, 10)}.xlsx`;
+                    XLSX.writeFile(wb, fileName);
+                    
+                    this.showMessage(`تم تصدير الملف "${fileName}" بنجاح`, 'success');
+                } catch (error) {
+                    console.error('خطأ في تصدير Excel:', error);
+                    this.showMessage('خطأ في تصدير الملف', 'error');
+                }
+            }
+            
+            generateStatisticsData(results) {
+                const stats = {
+                    'إجمالي النتائج': results.length,
+                    'المعدل العام': this.getAverageScore() + '%',
+                    'أعلى درجة': this.getTopScore() + '%',
+                    'أقل درجة': Math.min(...results.map(r => r.percentage)) + '%',
+                    'معدل النجاح': this.getPassRate() + '%',
+                    'عدد الناجحين': results.filter(r => r.percentage >= 50).length,
+                    'عدد الراسبين': results.filter(r => r.percentage < 50).length,
+                    'تاريخ التقرير': new Date().toLocaleDateString('ar-SA')
+                };
+                
+                return [stats];
+            }
+            
+            saveResultToExcel(result) {
+                try {
+                    const worksheetData = [{
+                        'اسم الطالب': result.studentName,
+                        'رقم الطالب': result.studentId,
+                        'الاختبار': result.examTitle,
+                        'المادة': result.examSubject,
+                        'عدد الأسئلة': result.totalQuestions,
+                        'الإجابات الصحيحة': result.correctAnswers,
+                        'النسبة المئوية': result.percentage + '%',
+                        'التقدير': result.grade.text,
+                        'تاريخ المسح': new Date(result.scannedAt).toLocaleDateString('ar-SA')
+                    }];
+                    
+                    const ws = XLSX.utils.json_to_sheet(worksheetData);
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, 'النتيجة');
+                    
+                    const fileName = `نتيجة_${result.studentName}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+                    XLSX.writeFile(wb, fileName);
+                    
+                    this.showMessage(`تم حفظ نتيجة ${result.studentName} في ملف Excel`, 'success');
+                    closeModal('resultModal');
+                } catch (error) {
+                    console.error('خطأ في حفظ النتيجة:', error);
+                    this.showMessage('خطأ في حفظ النتيجة', 'error');
+                }
+            }
+            
+            exportToPDF() {
+                this.showMessage('جاري إنشاء تقرير PDF... (محاكاة)', 'info');
+                // في التطبيق الحقيقي، يمكن استخدام مكتبة jsPDF هنا
+            }
+            
+            exportStatistics() {
+                this.showMessage('جاري إنشاء الإحصائيات... (محاكاة)', 'info');
+                // في التطبيق الحقيقي، يمكن إنشاء تقرير إحصائي مفصل
+            }
+            
+            printResult(result) {
+                const printWindow = window.open('', '_blank');
+                printWindow.document.write(`
                     <!DOCTYPE html>
-                    <html dir="rtl">
+                    <html dir="rtl" lang="ar">
                     <head>
+                        <meta charset="UTF-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        <title>نتيجة الطالب - ${result.studentName}</title>
                         <style>
-                            body { font-family: Arial, sans-serif; padding: 20px; }
-                            .print-header { text-align: center; margin-bottom: 30px; }
-                            .result-info { margin-bottom: 20px; }
-                            table { width: 100%; border-collapse: collapse; }
-                            th, td { border: 1px solid #000; padding: 8px; text-align: center; }
-                            @media print { .no-print { display: none; } }
+                            body { font-family: 'Cairo', Arial; padding: 20px; }
+                            .result { max-width: 800px; margin: 0 auto; border: 2px solid #333; padding: 20px; }
+                            .header { text-align: center; margin-bottom: 30px; }
+                            .info { margin-bottom: 20px; }
+                            .grade { text-align: center; font-size: 3rem; font-weight: bold; margin: 20px 0; }
                         </style>
                     </head>
                     <body>
-                        <div class="print-header">
-                            <h1>نتيجة الطالب - SamieGrade</h1>
-                            <hr>
+                        <div class="result">
+                            <div class="header">
+                                <h1>نتيجة الطالب - SamieGrade</h1>
+                                <h2>${result.examTitle}</h2>
+                            </div>
+                            <div class="info">
+                                <p><strong>اسم الطالب:</strong> ${result.studentName}</p>
+                                <p><strong>رقم الطالب:</strong> ${result.studentId}</p>
+                                <p><strong>المادة:</strong> ${result.examSubject}</p>
+                                <p><strong>تاريخ الاختبار:</strong> ${new Date(result.scannedAt).toLocaleDateString('ar-SA')}</p>
+                            </div>
+                            <div class="grade" style="color: ${result.percentage >= 50 ? 'green' : 'red'}">
+                                ${result.percentage}%
+                            </div>
+                            <p><strong>الدرجة:</strong> ${result.correctAnswers} من ${result.totalQuestions}</p>
+                            <p><strong>التقدير:</strong> ${result.grade.text}</p>
+                            <div style="margin-top: 30px; text-align: center; color: #666;">
+                                نظام التصحيح الآلي SamieGrade
+                            </div>
                         </div>
-                        <div class="result-info">
-                            <p><strong>اسم الطالب:</strong> ${result.studentName}</p>
-                            <p><strong>اسم الاختبار:</strong> ${result.testName}</p>
-                            <p><strong>التاريخ:</strong> ${result.date}</p>
-                            <p><strong>الدرجة:</strong> ${result.score}/${result.total} (${result.percentage}%)</p>
-                        </div>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>رقم السؤال</th>
-                                    <th>إجابة الطالب</th>
-                                    <th>الإجابة الصحيحة</th>
-                                    <th>الحالة</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${result.answers.map((answer, index) => `
-                                    <tr>
-                                        <td>${answer.question}</td>
-                                        <td>${answer.studentAnswer}</td>
-                                        <td>${answer.correctAnswer}</td>
-                                        <td>${answer.isCorrect ? 'صحيح' : 'خطأ'}</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                        <div class="no-print" style="margin-top: 20px; text-align: center;">
-                            <button onclick="window.print()">طباعة</button>
-                            <button onclick="window.close()">إغلاق</button>
-                        </div>
+                        <script>
+                            window.onload = function() {
+                                window.print();
+                            }
+                        <\/script>
                     </body>
                     </html>
-                `;
-                
-                const printWindow = window.open('', '_blank');
-                printWindow.document.write(printContent);
+                `);
                 printWindow.document.close();
             }
-        }
-
-        // Utility Functions
-        function showAlert(message, type = 'success') {
-            const alert = document.createElement('div');
-            alert.className = `alert alert-${type}`;
-            alert.innerHTML = `
-                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
-                ${message}
-            `;
             
-            document.querySelector('.container').insertBefore(alert, document.querySelector('.container').firstChild);
-            
-            setTimeout(() => {
-                alert.remove();
-            }, 5000);
-        }
-
-        function showLoading(show) {
-            if (show) {
-                elements.loadingModal.classList.remove('hidden');
-            } else {
-                elements.loadingModal.classList.add('hidden');
-            }
-        }
-
-        // Initialize
-        function init() {
-            initializeFirebase();
-            setupEventListeners();
-            updateAnswerSheetCapacity();
-            
-            // Check if user is already logged in (demo purposes)
-            if (localStorage.getItem('demoLoggedIn')) {
-                state.currentUser = { email: 'demo@samiegrade.com', name: 'المعلم' };
-                showApp();
+            // أدوات مساعدة
+            showLoading(message = 'جاري المعالجة...') {
+                document.getElementById('loadingMessage').textContent = message;
+                document.getElementById('loadingModal').classList.add('active');
             }
             
-            // Demo data
-            state.testConfig = {
-                name: 'اختبار الفصل الأول',
-                totalQuestions: 40,
-                correctAnswers: Array.from({length: 40}, () => ['A', 'B', 'C', 'D'][Math.floor(Math.random() * 4)]),
-                answerSheetUrl: ''
-            };
+            hideLoading() {
+                document.getElementById('loadingModal').classList.remove('active');
+            }
             
-            // Load demo results
-            setTimeout(() => {
-                if (state.results.length === 0) {
-                    // Add some demo results
-                    for (let i = 1; i <= 5; i++) {
-                        state.results.push({
-                            id: Date.now() + i,
-                            studentName: `طالب ${i}`,
-                            testName: 'اختبار الفصل الأول',
-                            date: new Date().toLocaleDateString('ar-SA'),
-                            score: Math.floor(Math.random() * 36) + 5,
-                            total: 40,
-                            percentage: Math.floor(Math.random() * 60) + 40,
-                            answers: [],
-                            grade: getGradeLevel(Math.floor(Math.random() * 60) + 40)
-                        });
-                    }
+            showMessage(message, type = 'info') {
+                const toast = document.createElement('div');
+                toast.className = 'toast';
+                toast.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    padding: 15px 25px;
+                    border-radius: 10px;
+                    color: white;
+                    font-weight: 600;
+                    z-index: 10000;
+                    animation: slideIn 0.3s ease;
+                    box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+                `;
+                
+                if (type === 'success') {
+                    toast.style.background = 'linear-gradient(135deg, var(--success), #219653)';
+                } else if (type === 'error') {
+                    toast.style.background = 'linear-gradient(135deg, var(--danger), #c0392b)';
+                } else if (type === 'warning') {
+                    toast.style.background = 'linear-gradient(135deg, var(--warning), #e67e22)';
+                } else {
+                    toast.style.background = 'linear-gradient(135deg, var(--info), #0984e3)';
                 }
-            }, 1000);
+                
+                toast.textContent = message;
+                document.body.appendChild(toast);
+                
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    setTimeout(() => toast.remove(), 300);
+                }, 3000);
+            }
+            
+            setupEventListeners() {
+                // يمكن إضافة مستمعي الأحداث الإضافية هنا
+            }
         }
-
-        // Start the application
-        document.addEventListener('DOMContentLoaded', init);
+        
+        // تعريف الدوال العامة
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+        
+        // تهيئة النظام
+        window.app = new SamieGradeSystem();
+        
+        // تعريف دالة للوصول من العناصر
+        window.handleLogin = function() { app.handleLogin(); };
+        window.handleRegister = function() { app.handleRegister(); };
     </script>
 </body>
 </html>
